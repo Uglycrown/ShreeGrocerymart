@@ -1,9 +1,10 @@
 'use client'
 
-import { ShoppingCart, MapPin, Search, User, Milk, Soup, Wheat, Droplet, Flame, Apple, Cookie, Coffee } from 'lucide-react'
+import { ShoppingCart, MapPin, Search, User, Milk, Soup, Wheat, Droplet, Flame, Apple, Cookie, Coffee, Heart } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCartStore } from '@/lib/store'
+import { useWishlistStore } from '@/lib/wishlist-store'
 import { formatPrice } from '@/lib/utils'
 import { useEffect, useState, useRef } from 'react'
 
@@ -33,6 +34,7 @@ export default function Header() {
   const searchRef = useRef<HTMLDivElement>(null)
   const itemCount = getItemsCount()
   const total = getTotal()
+  const { items: wishlistItems } = useWishlistStore()
 
   // Category icon mapping
   const getCategoryIcon = (slug: string) => {
@@ -205,6 +207,15 @@ export default function Header() {
                 <span>Login</span>
               </Link>
             )}
+            
+            <Link href="/wishlist" className="relative text-gray-700 hover:text-red-600 transition">
+              <Heart className="w-6 h-6" />
+              {mounted && wishlistItems.length > 0 && (
+                <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {wishlistItems.length}
+                </div>
+              )}
+            </Link>
             
             <Link href="/cart" className="relative flex items-center gap-2">
               <ShoppingCart className="w-6 h-6 text-gray-700" />

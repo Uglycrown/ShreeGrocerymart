@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { ShoppingCart, Heart, Share2, ChevronLeft, ChevronRight, Star, Clock, Truck, Shield } from 'lucide-react'
+import { ShoppingCart, Heart, Share2, ChevronLeft, ChevronRight, Star, Clock, Truck, Shield, Check } from 'lucide-react'
 import { useCartStore } from '@/lib/store'
+import { useWishlistStore } from '@/lib/wishlist-store'
 import { formatPrice } from '@/lib/utils'
 
 interface Product {
@@ -33,9 +34,12 @@ export default function ProductPage() {
   const [selectedImage, setSelectedImage] = useState(0)
   const [loading, setLoading] = useState(true)
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
+  const [shareSuccess, setShareSuccess] = useState(false)
   const { addItem, items } = useCartStore()
+  const { addItem: addToWishlist, removeItem: removeFromWishlist, isInWishlist } = useWishlistStore()
 
   const itemInCart = items.find((item) => item.id === product?.id)
+  const inWishlist = product ? isInWishlist(product.id) : false
 
   useEffect(() => {
     if (params.slug) {
@@ -89,6 +93,51 @@ export default function ProductPage() {
       image: product.images[0],
       unit: product.unit,
     })
+  }
+
+  const handleWishlistToggle = () => {
+    if (!product) return
+    
+    if (inWishlist) {
+      removeFromWishlist(product.id)
+    } else {
+      addToWishlist({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.images[0],
+        unit: product.unit,
+      })
+    }
+  }
+
+  const handleShare = async () => {
+    if (!product) return
+    
+    const url = window.location.href
+    const text = `Check out ${product.name} on Shree Grocery Mart!`
+    
+    // Try native share API first
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: product.name,
+          text: text,
+          url: url,
+        })
+      } catch (error) {
+        console.log('Share cancelled or failed')
+      }
+    } else {
+      // Fallback: Copy to clipboard
+      try {
+        await navigator.clipboard.writeText(url)
+        setShareSuccess(true)
+        setTimeout(() => setShareSuccess(false), 2000)
+      } catch (error) {
+        console.error('Failed to copy link')
+      }
+    }
   }
 
   const nextImage = () => {
@@ -305,12 +354,31 @@ export default function ProductPage() {
                 </button>
               )}
               
-              <button className="bg-white border-2 border-gray-300 p-4 rounded-lg hover:border-green-600 hover:text-green-600 transition">
-                <Heart className="w-6 h-6" />
+              <button 
+                onClick={handleWishlistToggle}
+                className={`relative border-2 p-4 rounded-lg transition ${
+                  inWishlist 
+                    ? 'bg-red-50 border-red-500 text-red-500' 
+                    : 'bg-white border-gray-300 hover:border-red-500 hover:text-red-500'
+                }`}
+              >
+                <Heart className={`w-6 h-6 ${inWishlist ? 'fill-current' : ''}`} />
               </button>
               
-              <button className="bg-white border-2 border-gray-300 p-4 rounded-lg hover:border-green-600 hover:text-green-600 transition">
-                <Share2 className="w-6 h-6" />
+              <button 
+                onClick={handleShare}
+                className="relative bg-white border-2 border-gray-300 p-4 rounded-lg hover:border-green-600 hover:text-green-600 transition"
+              >
+                {shareSuccess ? (
+                  <Check className="w-6 h-6 text-green-600" />
+                ) : (
+                  <Share2 className="w-6 h-6" />
+                )}
+                {shareSuccess && (
+                  <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                    Link copied!
+                  </span>
+                )}
               </button>
             </div>
           </div>
