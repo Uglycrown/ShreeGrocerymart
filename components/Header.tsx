@@ -140,30 +140,35 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-gradient-to-b from-green-400 to-green-200 shadow-md relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-30 pointer-events-none">
-        <div className="absolute top-1 left-10 text-white text-4xl">🥕</div>
-        <div className="absolute top-6 left-32 text-white text-3xl">🍎</div>
-        <div className="absolute top-2 right-20 text-white text-4xl">🥦</div>
-        <div className="absolute top-7 right-48 text-white text-3xl">🍊</div>
-        <div className="absolute top-1 left-1/4 text-white text-3xl">🥬</div>
-        <div className="absolute top-5 left-1/3 text-white text-4xl">🍅</div>
-        <div className="absolute top-2 right-1/4 text-white text-3xl">🥔</div>
-        <div className="absolute top-6 right-1/3 text-white text-4xl">🌽</div>
-        <div className="absolute top-3 left-1/2 text-white text-3xl">🍆</div>
-        <div className="absolute bottom-1 left-24 text-white text-4xl">🥒</div>
-        <div className="absolute bottom-4 left-48 text-white text-3xl">🍋</div>
-        <div className="absolute bottom-2 right-32 text-white text-4xl">🍇</div>
-        <div className="absolute bottom-5 right-60 text-white text-3xl">🥑</div>
-        <div className="absolute bottom-3 left-1/3 text-white text-4xl">🍌</div>
-        <div className="absolute bottom-1 right-1/3 text-white text-3xl">🍓</div>
-        <div className="absolute bottom-4 left-1/2 text-white text-4xl">🫐</div>
-        <div className="hidden md:block absolute top-3 left-2/3 text-white text-4xl">🥜</div>
-        <div className="hidden md:block absolute bottom-5 left-2/3 text-white text-3xl">🍉</div>
-        <div className="hidden md:block absolute top-6 left-3/4 text-white text-4xl">🌶️</div>
-        <div className="hidden md:block absolute bottom-2 right-2/3 text-white text-3xl">🫑</div>
-        <div className="hidden md:block absolute top-4 left-1/6 text-white text-3xl">🍑</div>
-        <div className="hidden md:block absolute bottom-6 right-1/6 text-white text-4xl">🥭</div>
-        <div className="hidden md:block absolute top-2 right-1/6 text-white text-3xl">🍒</div>
-        <div className="hidden md:block absolute bottom-3 left-3/4 text-white text-4xl">🥥</div>
+        {/* Top Row - More Spread Out */}
+        <div className="absolute top-2 left-8 text-white text-4xl">🥕</div>
+        <div className="absolute top-2 left-1/6 text-white text-3xl">🍎</div>
+        <div className="absolute top-2 left-1/4 text-white text-4xl">🥬</div>
+        <div className="absolute top-2 left-1/3 text-white text-3xl">🍅</div>
+        <div className="absolute top-2 left-1/2 text-white text-4xl">🍆</div>
+        <div className="absolute top-2 right-1/3 text-white text-3xl">🥔</div>
+        <div className="absolute top-2 right-1/4 text-white text-4xl">🌽</div>
+        <div className="absolute top-2 right-1/6 text-white text-3xl">🥦</div>
+        <div className="absolute top-2 right-8 text-white text-4xl">🍊</div>
+        
+        {/* Bottom Row - More Spread Out */}
+        <div className="absolute bottom-2 left-8 text-white text-4xl">🥒</div>
+        <div className="absolute bottom-2 left-1/6 text-white text-3xl">🍋</div>
+        <div className="absolute bottom-2 left-1/4 text-white text-4xl">🍌</div>
+        <div className="absolute bottom-2 left-1/3 text-white text-3xl">🫐</div>
+        <div className="absolute bottom-2 left-1/2 text-white text-4xl">🍓</div>
+        <div className="absolute bottom-2 right-1/3 text-white text-3xl">🍇</div>
+        <div className="absolute bottom-2 right-1/4 text-white text-4xl">🥑</div>
+        <div className="absolute bottom-2 right-1/6 text-white text-3xl">🍉</div>
+        <div className="absolute bottom-2 right-8 text-white text-4xl">🥭</div>
+        
+        {/* Extra for larger screens */}
+        <div className="hidden lg:block absolute top-2 left-2/3 text-white text-4xl">🥜</div>
+        <div className="hidden lg:block absolute top-2 left-5/6 text-white text-3xl">🌶️</div>
+        <div className="hidden lg:block absolute bottom-2 left-2/3 text-white text-3xl">🫑</div>
+        <div className="hidden lg:block absolute bottom-2 left-5/6 text-white text-4xl">🥥</div>
+        <div className="hidden lg:block absolute bottom-2 right-2/3 text-white text-3xl">🍑</div>
+        <div className="hidden lg:block absolute bottom-2 right-5/6 text-white text-4xl">🍒</div>
       </div>
       
       <div className="container mx-auto px-1 relative z-10">
