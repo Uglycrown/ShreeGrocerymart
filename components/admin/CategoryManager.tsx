@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Edit2, Trash2, Save, X, MoveUp, MoveDown } from 'lucide-react'
+import { Plus, Edit2, Trash2, Save, X, MoveUp, MoveDown, Upload } from 'lucide-react'
+import Image from 'next/image'
 
 interface Category {
   id: string
@@ -22,6 +23,7 @@ export default function CategoryManager({ categories: initialCategories, onUpdat
   const [categories, setCategories] = useState<Category[]>(initialCategories)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -121,10 +123,47 @@ export default function CategoryManager({ categories: initialCategories, onUpdat
     }
   }
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file')
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size should be less than 5MB')
+      return
+    }
+
+    setUploading(true)
+    try {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64String = reader.result as string
+        setFormData({ ...formData, image: base64String })
+        setUploading(false)
+      }
+      reader.onerror = () => {
+        alert('Failed to read image')
+        setUploading(false)
+      }
+      reader.readAsDataURL(file)
+    } catch (error) {
+      console.error('Error uploading image:', error)
+      alert('Failed to upload image')
+      setUploading(false)
+    }
+  }
+
   const resetForm = () => {
     setFormData({ name: '', description: '', image: '' })
     setEditingId(null)
     setShowForm(false)
+    setUploading(false)
   }
 
   return (
@@ -183,15 +222,65 @@ export default function CategoryManager({ categories: initialCategories, onUpdat
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Image URL
+                  Category Image
                 </label>
-                <input
-                  type="url"
-                  value={formData.image}
-                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                  placeholder="https://example.com/image.jpg"
-                />
+                
+                {/* Image Preview */}
+                {formData.image && (
+                  <div className="mb-4 relative w-32 h-32 border rounded-lg overflow-hidden">
+                    <Image
+                      src={formData.image}
+                      alt="Category preview"
+                      fill
+                      className="object-cover"
+                      unoptimized={formData.image.startsWith('data:')}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, image: '' })}
+                      className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Upload from Device */}
+                <div className="mb-3">
+                  <label className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-green-500 transition">
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Upload className="w-5 h-5" />
+                      <span className="font-medium">
+                        {uploading ? 'Uploading...' : 'Upload from Device'}
+                      </span>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={uploading}
+                      className="hidden"
+                    />
+                  </label>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Click to upload image (max 5MB)
+                  </p>
+                </div>
+
+                {/* Image URL Input */}
+                <div>
+                  <input
+                    type="url"
+                    value={formData.image.startsWith('data:') ? '' : formData.image}
+                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="Or paste image URL"
+                    disabled={formData.image.startsWith('data:')}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Alternative: Paste an image URL
+                  </p>
+                </div>
               </div>
 
               <div className="flex gap-3">
