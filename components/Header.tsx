@@ -235,7 +235,7 @@ export default function Header() {
         {/* Mobile Layout */}
         <div className="md:hidden py-3">
           {/* Top Row: Logo */}
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-center mb-3">
             <Link href="/" className="text-xl font-bold text-green-600">
               Shree Grocery Mart
             </Link>
