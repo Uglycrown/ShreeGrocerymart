@@ -31,7 +31,7 @@ export default function BottomNav() {
       href: '/wishlist',
       icon: Heart,
       badge: wishlistCount,
-      badgeColor: 'bg-red-500',
+      badgeColor: 'bg-green-600',
     },
     {
       name: 'Cart',
