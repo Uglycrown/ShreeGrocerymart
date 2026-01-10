@@ -138,37 +138,66 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-gradient-to-b from-green-400 to-green-200 shadow-md relative overflow-hidden">
-      {/* Background Pattern */}
+      {/* Background Pattern - Random Scattered Icons */}
       <div className="absolute inset-0 opacity-30 pointer-events-none">
-        {/* Top Row - Mobile optimized spacing */}
-        <div className="absolute top-2 left-2 text-white text-2xl md:text-4xl md:left-8">🥕</div>
-        <div className="absolute top-2 left-[15%] text-white text-xl md:text-3xl md:left-1/6">🍎</div>
-        <div className="absolute top-2 left-1/4 text-white text-2xl md:text-4xl">🥬</div>
-        <div className="absolute top-2 left-1/3 text-white text-xl md:text-3xl">🍅</div>
-        <div className="absolute top-2 left-1/2 text-white text-2xl md:text-4xl">🍆</div>
-        <div className="absolute top-2 right-1/3 text-white text-xl md:text-3xl">🥔</div>
-        <div className="absolute top-2 right-1/4 text-white text-2xl md:text-4xl">🌽</div>
-        <div className="absolute top-2 right-[15%] text-white text-xl md:text-3xl md:right-1/6">🥦</div>
-        <div className="absolute top-2 right-2 text-white text-2xl md:text-4xl md:right-8">🍊</div>
+        {/* Mobile - 30 icons randomly scattered */}
+        <div className="absolute top-[5%] left-[3%] text-white text-xl md:text-3xl">🥕</div>
+        <div className="absolute top-[8%] left-[25%] text-white text-lg md:text-2xl">🍎</div>
+        <div className="absolute top-[12%] left-[48%] text-white text-xl md:text-3xl">🥬</div>
+        <div className="absolute top-[6%] left-[72%] text-white text-lg md:text-2xl">🍅</div>
+        <div className="absolute top-[10%] left-[89%] text-white text-xl md:text-3xl">🍆</div>
         
-        {/* Bottom Row - Mobile optimized spacing */}
-        <div className="absolute bottom-2 left-2 text-white text-2xl md:text-4xl md:left-8">🥒</div>
-        <div className="absolute bottom-2 left-[15%] text-white text-xl md:text-3xl md:left-1/6">🍋</div>
-        <div className="absolute bottom-2 left-1/4 text-white text-2xl md:text-4xl">🍌</div>
-        <div className="absolute bottom-2 left-1/3 text-white text-xl md:text-3xl">🫐</div>
-        <div className="absolute bottom-2 left-1/2 text-white text-2xl md:text-4xl">🍓</div>
-        <div className="absolute bottom-2 right-1/3 text-white text-xl md:text-3xl">🍇</div>
-        <div className="absolute bottom-2 right-1/4 text-white text-2xl md:text-4xl">🥑</div>
-        <div className="absolute bottom-2 right-[15%] text-white text-xl md:text-3xl md:right-1/6">🍉</div>
-        <div className="absolute bottom-2 right-2 text-white text-2xl md:text-4xl md:right-8">🥭</div>
+        <div className="absolute top-[25%] left-[8%] text-white text-lg md:text-2xl">🥔</div>
+        <div className="absolute top-[28%] left-[35%] text-white text-xl md:text-3xl">🌽</div>
+        <div className="absolute top-[22%] left-[60%] text-white text-lg md:text-2xl">🥦</div>
+        <div className="absolute top-[27%] left-[82%] text-white text-xl md:text-3xl">🍊</div>
         
-        {/* Extra for larger screens */}
-        <div className="hidden lg:block absolute top-2 left-2/3 text-white text-4xl">🥜</div>
-        <div className="hidden lg:block absolute top-2 left-5/6 text-white text-3xl">🌶️</div>
-        <div className="hidden lg:block absolute bottom-2 left-2/3 text-white text-3xl">🫑</div>
-        <div className="hidden lg:block absolute bottom-2 left-5/6 text-white text-4xl">🥥</div>
-        <div className="hidden lg:block absolute bottom-2 right-2/3 text-white text-3xl">🍑</div>
-        <div className="hidden lg:block absolute bottom-2 right-5/6 text-white text-4xl">🍒</div>
+        <div className="absolute top-[45%] left-[5%] text-white text-xl md:text-3xl">🥒</div>
+        <div className="absolute top-[48%] left-[28%] text-white text-lg md:text-2xl">🍋</div>
+        <div className="absolute top-[42%] left-[52%] text-white text-xl md:text-3xl">🍌</div>
+        <div className="absolute top-[47%] left-[75%] text-white text-lg md:text-2xl">🫐</div>
+        <div className="absolute top-[43%] left-[93%] text-white text-xl md:text-3xl">🍓</div>
+        
+        <div className="absolute top-[65%] left-[12%] text-white text-lg md:text-2xl">🍇</div>
+        <div className="absolute top-[68%] left-[38%] text-white text-xl md:text-3xl">🥑</div>
+        <div className="absolute top-[62%] left-[65%] text-white text-lg md:text-2xl">🍉</div>
+        <div className="absolute top-[67%] left-[85%] text-white text-xl md:text-3xl">🥭</div>
+        
+        <div className="absolute top-[85%] left-[6%] text-white text-xl md:text-3xl">🥜</div>
+        <div className="absolute top-[88%] left-[22%] text-white text-lg md:text-2xl">🌶️</div>
+        <div className="absolute top-[82%] left-[45%] text-white text-xl md:text-3xl">🫑</div>
+        <div className="absolute top-[87%] left-[68%] text-white text-lg md:text-2xl">🥥</div>
+        <div className="absolute top-[83%] left-[90%] text-white text-xl md:text-3xl">🍑</div>
+        
+        <div className="absolute top-[15%] left-[15%] text-white text-lg md:text-2xl">🍒</div>
+        <div className="absolute top-[18%] left-[92%] text-white text-xl md:text-3xl">🥨</div>
+        <div className="absolute top-[35%] left-[18%] text-white text-lg md:text-2xl">🧅</div>
+        <div className="absolute top-[38%] left-[88%] text-white text-xl md:text-3xl">🧄</div>
+        <div className="absolute top-[55%] left-[20%] text-white text-lg md:text-2xl">🫚</div>
+        <div className="absolute top-[58%] left-[95%] text-white text-xl md:text-3xl">🥬</div>
+        <div className="absolute top-[75%] left-[32%] text-white text-lg md:text-2xl">🍠</div>
+        
+        {/* Desktop - Additional 20 icons */}
+        <div className="hidden md:block absolute top-[7%] left-[40%] text-white text-2xl">🍍</div>
+        <div className="hidden md:block absolute top-[13%] left-[55%] text-white text-3xl">🥝</div>
+        <div className="hidden md:block absolute top-[9%] left-[78%] text-white text-2xl">🍈</div>
+        <div className="hidden md:block absolute top-[20%] left-[12%] text-white text-3xl">🥭</div>
+        <div className="hidden md:block absolute top-[23%] left-[45%] text-white text-2xl">🍐</div>
+        <div className="hidden md:block absolute top-[29%] left-[70%] text-white text-3xl">🍏</div>
+        <div className="hidden md:block absolute top-[32%] left-[25%] text-white text-2xl">🥔</div>
+        <div className="hidden md:block absolute top-[37%] left-[42%] text-white text-3xl">🫛</div>
+        <div className="hidden md:block absolute top-[40%] left-[68%] text-white text-2xl">🌶️</div>
+        <div className="hidden md:block absolute top-[44%] left-[15%] text-white text-3xl">🍆</div>
+        <div className="hidden md:block absolute top-[50%] left-[32%] text-white text-2xl">🥕</div>
+        <div className="hidden md:block absolute top-[53%] left-[78%] text-white text-3xl">🥒</div>
+        <div className="hidden md:block absolute top-[56%] left-[48%] text-white text-2xl">🫑</div>
+        <div className="hidden md:block absolute top-[63%] left-[8%] text-white text-3xl">🥬</div>
+        <div className="hidden md:block absolute top-[69%] left-[28%] text-white text-2xl">🥦</div>
+        <div className="hidden md:block absolute top-[72%] left-[55%] text-white text-3xl">🌽</div>
+        <div className="hidden md:block absolute top-[77%] left-[15%] text-white text-2xl">🍅</div>
+        <div className="hidden md:block absolute top-[80%] left-[58%] text-white text-3xl">🍓</div>
+        <div className="hidden md:block absolute top-[86%] left-[78%] text-white text-2xl">🫐</div>
+        <div className="hidden md:block absolute top-[92%] left-[12%] text-white text-3xl">🍇</div>
       </div>
       
       <div className="container mx-auto px-1 relative z-10">
