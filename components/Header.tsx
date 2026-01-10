@@ -138,7 +138,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-md">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-1">
         {/* Desktop Layout */}
         <div className="hidden md:flex items-center justify-between py-4">
           {/* Logo and Location */}
@@ -281,7 +281,7 @@ export default function Header() {
 
         {/* Category Navigation Bar */}
         <div className="bg-white">
-          <div className="container mx-auto px-4">
+          <div className="container mx-auto px-1">
             <div className="flex items-center gap-6 py-3 overflow-x-auto scrollbar-hide">
               <Link
                 href="/"
