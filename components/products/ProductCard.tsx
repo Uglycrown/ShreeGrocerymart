@@ -33,7 +33,7 @@ export default function ProductCard({
   const quantity = cartItem?.quantity || 0
 
   const handleCardClick = () => {
-    const slug = name.toLowerCase().replace(/\s+/g, '-')
+    const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
     router.push(`/product/${slug}`)
   }
 

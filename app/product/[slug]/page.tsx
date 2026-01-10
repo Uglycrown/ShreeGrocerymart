@@ -45,13 +45,23 @@ export default function ProductPage() {
 
   const fetchProduct = async (slug: string) => {
     try {
-      const res = await fetch(`/api/products?search=${slug}`)
+      // First try to fetch by searching product name
+      const searchTerm = slug.replace(/-/g, ' ')
+      const res = await fetch(`/api/products`)
       const data = await res.json()
-      const foundProduct = data.find((p: any) => p.name.toLowerCase().includes(slug.toLowerCase()))
+      
+      // Find product by matching slug or name
+      const foundProduct = data.find((p: any) => {
+        const productSlug = p.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+        const searchSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '')
+        return productSlug === searchSlug || p.name.toLowerCase().includes(searchTerm.toLowerCase())
+      })
       
       if (foundProduct) {
         setProduct(foundProduct)
-        fetchRelatedProducts(foundProduct.category.id, foundProduct.id)
+        if (foundProduct.category?.id) {
+          fetchRelatedProducts(foundProduct.category.id, foundProduct.id)
+        }
       }
     } catch (error) {
       console.error('Error fetching product:', error)
@@ -311,39 +321,42 @@ export default function ProductPage() {
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Similar Products</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {relatedProducts.map((relatedProduct) => (
-                <div
-                  key={relatedProduct.id}
-                  onClick={() => router.push(`/product/${relatedProduct.name.toLowerCase().replace(/\s+/g, '-')}`)}
-                  className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition"
-                >
-                  <div className="relative aspect-square">
-                    <Image
-                      src={relatedProduct.images[0]}
-                      alt={relatedProduct.name}
-                      fill
-                      className="object-cover"
-                      unoptimized={relatedProduct.images[0].startsWith('data:')}
-                    />
-                  </div>
-                  <div className="p-3">
-                    <h3 className="font-semibold text-sm text-gray-900 mb-1 line-clamp-2">
-                      {relatedProduct.name}
-                    </h3>
-                    <p className="text-xs text-gray-600 mb-2">{relatedProduct.unit}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-gray-900">
-                        {formatPrice(relatedProduct.price)}
-                      </span>
-                      {relatedProduct.originalPrice && (
-                        <span className="text-xs text-gray-400 line-through">
-                          {formatPrice(relatedProduct.originalPrice)}
+              {relatedProducts.map((relatedProduct) => {
+                const relatedSlug = relatedProduct.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+                return (
+                  <div
+                    key={relatedProduct.id}
+                    onClick={() => router.push(`/product/${relatedSlug}`)}
+                    className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition"
+                  >
+                    <div className="relative aspect-square">
+                      <Image
+                        src={relatedProduct.images[0]}
+                        alt={relatedProduct.name}
+                        fill
+                        className="object-cover"
+                        unoptimized={relatedProduct.images[0].startsWith('data:')}
+                      />
+                    </div>
+                    <div className="p-3">
+                      <h3 className="font-semibold text-sm text-gray-900 mb-1 line-clamp-2">
+                        {relatedProduct.name}
+                      </h3>
+                      <p className="text-xs text-gray-600 mb-2">{relatedProduct.unit}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-gray-900">
+                          {formatPrice(relatedProduct.price)}
                         </span>
-                      )}
+                        {relatedProduct.originalPrice && (
+                          <span className="text-xs text-gray-400 line-through">
+                            {formatPrice(relatedProduct.originalPrice)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         )}
