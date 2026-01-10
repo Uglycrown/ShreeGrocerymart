@@ -139,7 +139,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 bg-gradient-to-b from-green-400 to-green-200 shadow-md relative overflow-hidden">
       {/* Background Pattern - Random Scattered Icons */}
-      <div className="absolute inset-0 opacity-30 pointer-events-none">
+      <div className="absolute inset-0 opacity-20 pointer-events-none grayscale">
         {/* Mobile - 30 icons randomly scattered */}
         <div className="absolute top-[5%] left-[3%] text-white text-xl md:text-3xl">🥕</div>
         <div className="absolute top-[8%] left-[25%] text-white text-lg md:text-2xl">🍎</div>
