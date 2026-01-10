@@ -44,6 +44,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
 
   const [tagInput, setTagInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -75,6 +76,43 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
       ...formData,
       images: formData.images.filter((_, i) => i !== index),
     })
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    setUploading(true)
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          alert(`${file.name} is not an image file`)
+          continue
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          alert(`${file.name} is too large. Max size is 5MB`)
+          continue
+        }
+
+        // Convert to base64
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          const base64String = reader.result as string
+          addImage(base64String)
+        }
+        reader.readAsDataURL(file)
+      }
+    } catch (error) {
+      console.error('Error uploading image:', error)
+      alert('Failed to upload image')
+    } finally {
+      setUploading(false)
+    }
   }
 
   return (
@@ -195,7 +233,13 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
         <div className="grid grid-cols-4 gap-4 mb-4">
           {formData.images.map((img, index) => (
             <div key={index} className="relative aspect-square border rounded-lg overflow-hidden">
-              <Image src={img} alt={`Product ${index + 1}`} fill className="object-cover" />
+              <Image 
+                src={img} 
+                alt={`Product ${index + 1}`} 
+                fill 
+                className="object-cover"
+                unoptimized={img.startsWith('data:')}
+              />
               <button
                 type="button"
                 onClick={() => removeImage(index)}
@@ -206,19 +250,46 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
             </div>
           ))}
         </div>
-        <input
-          type="text"
-          placeholder="Image URL"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              addImage(e.currentTarget.value)
-              e.currentTarget.value = ''
-            }
-          }}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-        />
-        <p className="text-xs text-gray-500 mt-1">Press Enter to add image URL</p>
+        
+        {/* Upload from device */}
+        <div className="mb-4">
+          <label className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-green-500 transition">
+            <div className="flex items-center gap-2 text-gray-600">
+              <Upload className="w-5 h-5" />
+              <span className="font-medium">
+                {uploading ? 'Uploading...' : 'Upload from Device'}
+              </span>
+            </div>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageUpload}
+              disabled={uploading}
+              className="hidden"
+            />
+          </label>
+          <p className="text-xs text-gray-500 mt-1">
+            Click to upload images (max 5MB each, supports multiple files)
+          </p>
+        </div>
+
+        {/* Image URL input */}
+        <div>
+          <input
+            type="text"
+            placeholder="Or paste image URL"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                addImage(e.currentTarget.value)
+                e.currentTarget.value = ''
+              }
+            }}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          />
+          <p className="text-xs text-gray-500 mt-1">Press Enter to add image URL</p>
+        </div>
       </div>
 
       {/* Tags */}

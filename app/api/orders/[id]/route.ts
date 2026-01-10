@@ -24,15 +24,26 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
+    console.log('Updating order:', id)
+    
     const data = await request.json()
+    console.log('Update data:', data)
+    
     const db = await getDb()
     const updateData: any = { updatedAt: new Date() }
     if (data.status) updateData.status = data.status
     if (data.paymentStatus) updateData.paymentStatus = data.paymentStatus
+    
+    console.log('Update payload:', updateData)
+    
     const result = await db.collection('Order').updateOne({ _id: new ObjectId(id) }, { $set: updateData })
+    console.log('Update result:', result)
+    
     if (result.matchedCount === 0) return NextResponse.json({ message: 'Order not found' }, { status: 404 })
     return NextResponse.json({ message: 'Order updated successfully' })
-  } catch (error) {
-    return NextResponse.json({ message: 'Failed to update order' }, { status: 500 })
+  } catch (error: any) {
+    console.error('Error updating order:', error)
+    console.error('Error stack:', error.stack)
+    return NextResponse.json({ message: 'Failed to update order', error: error.message }, { status: 500 })
   }
 }
