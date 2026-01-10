@@ -137,8 +137,30 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-gradient-to-b from-green-400 to-green-200 shadow-md">
-      <div className="container mx-auto px-1">
+    <header className="sticky top-0 z-50 bg-gradient-to-b from-green-400 to-green-200 shadow-md relative overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-10 pointer-events-none">
+        <div className="absolute top-2 left-10 text-white text-3xl">🥕</div>
+        <div className="absolute top-5 left-32 text-white text-2xl">🍎</div>
+        <div className="absolute top-3 right-20 text-white text-2xl">🥦</div>
+        <div className="absolute top-6 right-48 text-white text-3xl">🍊</div>
+        <div className="absolute top-2 left-1/4 text-white text-2xl">🥬</div>
+        <div className="absolute top-4 left-1/3 text-white text-3xl">🍅</div>
+        <div className="absolute top-3 right-1/4 text-white text-2xl">🥔</div>
+        <div className="absolute top-5 right-1/3 text-white text-3xl">🌽</div>
+        <div className="absolute bottom-2 left-24 text-white text-2xl">🥒</div>
+        <div className="absolute bottom-3 left-48 text-white text-3xl">🍋</div>
+        <div className="absolute bottom-2 right-32 text-white text-2xl">🍇</div>
+        <div className="absolute bottom-4 right-60 text-white text-3xl">🥑</div>
+        <div className="absolute bottom-3 left-1/3 text-white text-2xl">🍌</div>
+        <div className="absolute bottom-2 right-1/3 text-white text-3xl">🍓</div>
+        <div className="hidden md:block absolute top-4 left-2/3 text-white text-2xl">🥜</div>
+        <div className="hidden md:block absolute bottom-4 left-2/3 text-white text-3xl">🍉</div>
+        <div className="hidden md:block absolute top-5 left-3/4 text-white text-2xl">🌶️</div>
+        <div className="hidden md:block absolute bottom-3 right-2/3 text-white text-2xl">🫑</div>
+      </div>
+      
+      <div className="container mx-auto px-1 relative z-10">
         {/* Desktop Layout */}
         <div className="hidden md:flex items-center justify-between py-4">
           {/* Logo and Location */}
