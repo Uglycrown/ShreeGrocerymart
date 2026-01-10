@@ -280,15 +280,15 @@ export default function Header() {
         </div>
 
         {/* Category Navigation Bar */}
-        <div className="border-t border-gray-200 bg-gray-50">
+        <div className="bg-white">
           <div className="container mx-auto px-4">
-            <div className="flex items-center gap-8 py-4 overflow-x-auto scrollbar-hide">
+            <div className="flex items-center gap-6 py-3 overflow-x-auto scrollbar-hide">
               <Link
                 href="/"
-                className="flex flex-col items-center gap-2 min-w-fit group"
+                className="flex flex-col items-center gap-1.5 min-w-fit group"
               >
-                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center group-hover:bg-green-600 transition-colors">
-                  <ShoppingCart className="w-6 h-6 text-green-600 group-hover:text-white" />
+                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center group-hover:bg-green-600 transition-colors">
+                  <ShoppingCart className="w-5 h-5 text-green-600 group-hover:text-white" />
                 </div>
                 <span className="text-xs font-medium text-gray-700 group-hover:text-green-600 transition-colors text-center">
                   All Products
@@ -300,10 +300,10 @@ export default function Header() {
                   <Link
                     key={category.id}
                     href={`/category/${category.slug}`}
-                    className="flex flex-col items-center gap-2 min-w-fit group"
+                    className="flex flex-col items-center gap-1.5 min-w-fit group"
                   >
-                    <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center group-hover:bg-green-600 transition-colors">
-                      <Icon className="w-6 h-6 text-green-600 group-hover:text-white" />
+                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center group-hover:bg-green-600 transition-colors">
+                      <Icon className="w-5 h-5 text-green-600 group-hover:text-white" />
                     </div>
                     <span className="text-xs font-medium text-gray-700 group-hover:text-green-600 transition-colors text-center max-w-[80px]">
                       {category.name}
