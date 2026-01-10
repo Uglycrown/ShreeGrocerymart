@@ -58,16 +58,16 @@ export default function AccountPage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="bg-white rounded-lg shadow-md p-4 text-center">
-                <Package className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-gray-900">0</div><div className="text-xs text-gray-600">Orders</div>
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 mb-6">
+              <div className="bg-white rounded-lg shadow-md p-2 sm:p-3 md:p-4 text-center">
+                <Package className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-green-600 mx-auto mb-1 sm:mb-2" />
+                <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">0</div><div className="text-[10px] sm:text-xs text-gray-600">Orders</div>
               </div>
-              <div className="bg-white rounded-lg shadow-md p-4 text-center">
-                <Heart className="w-6 h-6 text-red-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-gray-900">0</div><div className="text-xs text-gray-600">Wishlist</div>
+              <div className="bg-white rounded-lg shadow-md p-2 sm:p-3 md:p-4 text-center">
+                <Heart className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-red-600 mx-auto mb-1 sm:mb-2" />
+                <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">0</div><div className="text-[10px] sm:text-xs text-gray-600">Wishlist</div>
               </div>
-              <div className="bg-white rounded-lg shadow-md p-4 text-center">
+              <div className="bg-white rounded-lg shadow-md p-2 sm:p-3 md:p-4 text-center">
                 <ShoppingBag className="w-6 h-6 text-blue-600 mx-auto mb-2" />
                 <div className="text-2xl font-bold text-gray-900">₹0</div><div className="text-xs text-gray-600">Spent</div>
               </div>

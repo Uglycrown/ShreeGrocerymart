@@ -8,9 +8,19 @@ import { Package, Plus, List, Tag, Image as ImageIcon, Edit2, Trash2, ShoppingBa
 
 type Tab = 'products' | 'categories' | 'banners' | 'orders'
 
+interface Category {
+  id: string
+  name: string
+  slug: string
+  description?: string
+  image?: string
+  priority: number
+  isActive: boolean
+}
+
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>('products')
-  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([])
+  const [categories, setCategories] = useState<Category[]>([])
   const [products, setProducts] = useState<any[]>([])
   const [showProductForm, setShowProductForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState<any>(null)

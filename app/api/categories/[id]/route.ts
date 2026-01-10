@@ -56,6 +56,11 @@ export async function PUT(
     }
 
     const category = await db.collection('Category').findOne({ _id: new ObjectId(id) })
+    
+    if (!category) {
+      return NextResponse.json({ error: 'Category not found after update' }, { status: 404 })
+    }
+
     return NextResponse.json({
       ...category,
       id: category._id.toString(),
@@ -97,6 +102,11 @@ export async function PATCH(
     }
 
     const category = await db.collection('Category').findOne({ _id: new ObjectId(id) })
+    
+    if (!category) {
+      return NextResponse.json({ error: 'Category not found after update' }, { status: 404 })
+    }
+
     return NextResponse.json({
       ...category,
       id: category._id.toString(),

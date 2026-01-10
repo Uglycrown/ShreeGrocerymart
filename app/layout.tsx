@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import Footer from "@/components/Footer";
+import BackgroundPattern from "@/components/BackgroundPattern";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,12 +29,17 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased relative`}
       >
-        <Header />
-        {children}
-        <Footer />
-        <BottomNav />
+        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+          <BackgroundPattern />
+        </div>
+        <div className="relative z-10">
+          <Header />
+          {children}
+          <Footer />
+          <BottomNav />
+        </div>
       </body>
     </html>
   );

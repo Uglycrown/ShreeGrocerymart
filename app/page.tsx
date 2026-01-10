@@ -101,15 +101,15 @@ export default function Home() {
       {/* Categories Grid */}
       <section className="container mx-auto px-4 py-8">
         <h2 className="text-2xl font-bold mb-6 text-gray-900">Shop by Category</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
           {categories.slice(0, 20).map((category) => (
             <Link
               key={category.id}
               href={`/category/${category.slug}`}
-              className="bg-white rounded-lg p-4 text-center hover:shadow-lg transition-shadow"
+              className="bg-white rounded-lg p-2 sm:p-3 md:p-4 text-center hover:shadow-lg transition-shadow"
             >
               {category.image && (
-                <div className="relative w-20 h-20 mx-auto mb-3">
+                <div className="relative w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto mb-1.5 sm:mb-2 md:mb-3">
                   <Image
                     src={category.image}
                     alt={category.name}
@@ -118,7 +118,7 @@ export default function Home() {
                   />
                 </div>
               )}
-              <h3 className="font-semibold text-sm text-gray-900">{category.name}</h3>
+              <h3 className="font-semibold text-[10px] sm:text-xs md:text-sm text-gray-900 line-clamp-2">{category.name}</h3>
             </Link>
           ))}
         </div>
@@ -133,7 +133,7 @@ export default function Home() {
               See all <ChevronRight className="w-5 h-5" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
             {featuredProducts.slice(0, 12).map((product) => (
               <ProductCard
                 key={product.id}
@@ -167,7 +167,7 @@ export default function Home() {
                 See all <ChevronRight className="w-5 h-5" />
               </Link>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
               {categoryProducts.map((product) => (
                 <ProductCard
                   key={product.id}

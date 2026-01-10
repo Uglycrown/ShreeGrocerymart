@@ -31,6 +31,11 @@ async function updateProduct(request: NextRequest, id: string) {
   const result = await db.collection('Product').updateOne({ _id: new ObjectId(id) }, { $set: updateData })
   if (result.matchedCount === 0) return NextResponse.json({ error: 'Product not found' }, { status: 404 })
   const product = await db.collection('Product').findOne({ _id: new ObjectId(id) })
+  
+  if (!product) {
+    return NextResponse.json({ error: 'Product not found after update' }, { status: 404 })
+  }
+
   return NextResponse.json({ ...product, id: product._id.toString() })
 }
 

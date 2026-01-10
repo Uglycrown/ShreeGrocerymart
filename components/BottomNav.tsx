@@ -82,22 +82,22 @@ export default function BottomNav() {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex flex-col items-center justify-center gap-1 transition-all duration-200 ${
+                className={`flex flex-col items-center justify-center gap-1 py-1 transition-all duration-200 ${
                   active
                     ? 'text-green-600 -translate-y-1'
                     : 'text-gray-600 hover:text-green-600'
                 }`}
               >
-                <div className="relative">
+                <div className="relative p-1">
                   {/* Icon with background on active */}
                   <div
-                    className={`p-2 rounded-full transition-all duration-200 ${
+                    className={`p-1.5 rounded-full transition-all duration-200 ${
                       active ? 'bg-green-50' : ''
                     }`}
                   >
                     <Icon
                       className={`transition-all duration-200 ${
-                        active ? 'w-6 h-6' : 'w-5 h-5'
+                        active ? 'w-5 h-5' : 'w-5 h-5'
                       }`}
                       strokeWidth={active ? 2.5 : 2}
                     />

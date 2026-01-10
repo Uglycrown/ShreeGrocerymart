@@ -46,68 +46,68 @@ export default function CartPage() {
           <h1 className="text-3xl font-bold text-gray-900">My Cart ({getItemsCount()} items)</h1>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="bg-white rounded-lg shadow-md p-3 sm:p-4 md:p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">Cart Items</h2>
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Cart Items</h2>
                 <button
                   onClick={clearCart}
-                  className="text-red-600 hover:text-red-700 text-sm font-semibold flex items-center gap-1"
+                  className="text-red-600 hover:text-red-700 text-xs sm:text-sm font-semibold flex items-center gap-1"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                   Clear Cart
                 </button>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {items.map((item) => (
-                  <div key={item.id} className="flex gap-4 pb-4 border-b last:border-b-0">
-                    <div className="relative w-24 h-24 flex-shrink-0 bg-gray-50 rounded-lg">
+                  <div key={item.id} className="flex gap-2 sm:gap-3 md:gap-4 pb-3 sm:pb-4 border-b last:border-b-0">
+                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 flex-shrink-0 bg-gray-50 rounded-lg">
                       <Image
                         src={item.image || '/placeholder.png'}
                         alt={item.name}
                         fill
-                        className="object-contain p-2"
+                        className="object-contain p-1 sm:p-2"
                       />
                     </div>
                     
                     <div className="flex-1">
-                      <div className="flex justify-between mb-2">
+                      <div className="flex justify-between mb-1 sm:mb-2">
                         <div>
-                          <h3 className="font-semibold text-lg text-gray-900">{item.name}</h3>
-                          <p className="text-sm text-gray-600">{item.unit}</p>
+                          <h3 className="font-semibold text-sm sm:text-base md:text-lg text-gray-900 line-clamp-2">{item.name}</h3>
+                          <p className="text-xs sm:text-sm text-gray-600">{item.unit}</p>
                         </div>
                         <button
                           onClick={() => removeItem(item.productId)}
-                          className="text-red-600 hover:text-red-700 p-2"
+                          className="text-red-600 hover:text-red-700 p-1 sm:p-2"
                         >
-                          <Trash2 className="w-5 h-5" />
+                          <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                         </button>
                       </div>
                       
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3 border border-green-600 rounded-lg">
+                        <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 border border-green-600 rounded-lg">
                           <button
                             onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                            className="p-2 hover:bg-gray-100 rounded-l-lg"
+                            className="p-1 sm:p-1.5 md:p-2 hover:bg-gray-100 rounded-l-lg"
                           >
-                            <Minus className="w-5 h-5 text-green-600" />
+                            <Minus className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-green-600" />
                           </button>
-                          <span className="text-lg font-semibold px-4 text-gray-900">{item.quantity}</span>
+                          <span className="text-sm sm:text-base md:text-lg font-semibold px-2 sm:px-3 md:px-4 text-gray-900">{item.quantity}</span>
                           <button
                             onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                            className="p-2 hover:bg-gray-100 rounded-r-lg"
+                            className="p-1 sm:p-1.5 md:p-2 hover:bg-gray-100 rounded-r-lg"
                           >
-                            <Plus className="w-5 h-5 text-green-600" />
+                            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-green-600" />
                           </button>
                         </div>
                         
                         <div className="text-right">
-                          <div className="text-xl font-bold text-gray-900">{formatPrice(item.price * item.quantity)}</div>
+                          <div className="text-base sm:text-lg md:text-xl font-bold text-gray-900">{formatPrice(item.price * item.quantity)}</div>
                           {item.originalPrice && (
-                            <div className="text-sm text-gray-500 line-through">
+                            <div className="text-xs sm:text-sm text-gray-500 line-through">
                               {formatPrice(item.originalPrice * item.quantity)}
                             </div>
                           )}

@@ -2,7 +2,7 @@
 
 import { ShoppingCart, MapPin, Search, User, Milk, Soup, Wheat, Droplet, Flame, Apple, Cookie, Coffee, Heart } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useCartStore } from '@/lib/store'
 import { useWishlistStore } from '@/lib/wishlist-store'
 import { formatPrice } from '@/lib/utils'
@@ -24,6 +24,7 @@ interface Category {
 
 export default function Header() {
   const router = useRouter()
+  const pathname = usePathname()
   const { items, getItemsCount, getTotal } = useCartStore()
   const [mounted, setMounted] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -137,76 +138,85 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-gradient-to-b from-green-400 to-green-200 shadow-md relative overflow-hidden">
+    <header className="sticky top-0 z-50 bg-gradient-to-b from-orange-50 to-white shadow-md relative">
       {/* Background Pattern - Random Scattered Icons */}
-      <div className="absolute inset-0 opacity-20 pointer-events-none grayscale">
-        {/* Mobile - 30 icons randomly scattered */}
-        <div className="absolute top-[5%] left-[3%] text-white text-xl md:text-3xl">🥕</div>
-        <div className="absolute top-[8%] left-[25%] text-white text-lg md:text-2xl">🍎</div>
-        <div className="absolute top-[12%] left-[48%] text-white text-xl md:text-3xl">🥬</div>
-        <div className="absolute top-[6%] left-[72%] text-white text-lg md:text-2xl">🍅</div>
-        <div className="absolute top-[10%] left-[89%] text-white text-xl md:text-3xl">🍆</div>
+      <div className="absolute inset-0 opacity-30 pointer-events-none grayscale overflow-hidden">
+        {/* Mobile - 35 icons randomly scattered with grocery items */}
+        <div className="absolute top-[5%] left-[3%] text-white text-xl md:text-3xl">🥛</div>
+        <div className="absolute top-[8%] left-[25%] text-white text-lg md:text-2xl">🍺</div>
+        <div className="absolute top-[12%] left-[48%] text-white text-xl md:text-3xl">🍿</div>
+        <div className="absolute top-[6%] left-[72%] text-white text-lg md:text-2xl">🥚</div>
+        <div className="absolute top-[10%] left-[89%] text-white text-xl md:text-3xl">🛢️</div>
         
-        <div className="absolute top-[25%] left-[8%] text-white text-lg md:text-2xl">🥔</div>
-        <div className="absolute top-[28%] left-[35%] text-white text-xl md:text-3xl">🌽</div>
-        <div className="absolute top-[22%] left-[60%] text-white text-lg md:text-2xl">🥦</div>
-        <div className="absolute top-[27%] left-[82%] text-white text-xl md:text-3xl">🍊</div>
+        <div className="absolute top-[25%] left-[8%] text-white text-lg md:text-2xl">🍚</div>
+        <div className="absolute top-[28%] left-[35%] text-white text-xl md:text-3xl">🧈</div>
+        <div className="absolute top-[22%] left-[60%] text-white text-lg md:text-2xl">🌾</div>
+        <div className="absolute top-[27%] left-[82%] text-white text-xl md:text-3xl">💄</div>
         
-        <div className="absolute top-[45%] left-[5%] text-white text-xl md:text-3xl">🥒</div>
-        <div className="absolute top-[48%] left-[28%] text-white text-lg md:text-2xl">🍋</div>
-        <div className="absolute top-[42%] left-[52%] text-white text-xl md:text-3xl">🍌</div>
-        <div className="absolute top-[47%] left-[75%] text-white text-lg md:text-2xl">🫐</div>
-        <div className="absolute top-[43%] left-[93%] text-white text-xl md:text-3xl">🍓</div>
+        <div className="absolute top-[45%] left-[5%] text-white text-xl md:text-3xl">🥤</div>
+        <div className="absolute top-[48%] left-[28%] text-white text-lg md:text-2xl">🍶</div>
+        <div className="absolute top-[42%] left-[52%] text-white text-xl md:text-3xl">🥜</div>
+        <div className="absolute top-[47%] left-[75%] text-white text-lg md:text-2xl">🧴</div>
+        <div className="absolute top-[43%] left-[93%] text-white text-xl md:text-3xl">🍞</div>
         
-        <div className="absolute top-[65%] left-[12%] text-white text-lg md:text-2xl">🍇</div>
-        <div className="absolute top-[68%] left-[38%] text-white text-xl md:text-3xl">🥑</div>
-        <div className="absolute top-[62%] left-[65%] text-white text-lg md:text-2xl">🍉</div>
-        <div className="absolute top-[67%] left-[85%] text-white text-xl md:text-3xl">🥭</div>
+        <div className="absolute top-[65%] left-[12%] text-white text-lg md:text-2xl">☕</div>
+        <div className="absolute top-[68%] left-[38%] text-white text-xl md:text-3xl">🫘</div>
+        <div className="absolute top-[62%] left-[65%] text-white text-lg md:text-2xl">🥛</div>
+        <div className="absolute top-[67%] left-[85%] text-white text-xl md:text-3xl">🧊</div>
         
-        <div className="absolute top-[85%] left-[6%] text-white text-xl md:text-3xl">🥜</div>
-        <div className="absolute top-[88%] left-[22%] text-white text-lg md:text-2xl">🌶️</div>
-        <div className="absolute top-[82%] left-[45%] text-white text-xl md:text-3xl">🫑</div>
-        <div className="absolute top-[87%] left-[68%] text-white text-lg md:text-2xl">🥥</div>
-        <div className="absolute top-[83%] left-[90%] text-white text-xl md:text-3xl">🍑</div>
+        <div className="absolute top-[85%] left-[6%] text-white text-xl md:text-3xl">🍵</div>
+        <div className="absolute top-[88%] left-[22%] text-white text-lg md:text-2xl">🥫</div>
+        <div className="absolute top-[82%] left-[45%] text-white text-xl md:text-3xl">🧂</div>
+        <div className="absolute top-[87%] left-[68%] text-white text-lg md:text-2xl">🍯</div>
+        <div className="absolute top-[83%] left-[90%] text-white text-xl md:text-3xl">🧼</div>
         
-        <div className="absolute top-[15%] left-[15%] text-white text-lg md:text-2xl">🍒</div>
-        <div className="absolute top-[18%] left-[92%] text-white text-xl md:text-3xl">🥨</div>
-        <div className="absolute top-[35%] left-[18%] text-white text-lg md:text-2xl">🧅</div>
-        <div className="absolute top-[38%] left-[88%] text-white text-xl md:text-3xl">🧄</div>
-        <div className="absolute top-[55%] left-[20%] text-white text-lg md:text-2xl">🫚</div>
-        <div className="absolute top-[58%] left-[95%] text-white text-xl md:text-3xl">🥬</div>
-        <div className="absolute top-[75%] left-[32%] text-white text-lg md:text-2xl">🍠</div>
+        <div className="absolute top-[15%] left-[15%] text-white text-lg md:text-2xl">🧃</div>
+        <div className="absolute top-[18%] left-[92%] text-white text-xl md:text-3xl">🥟</div>
+        <div className="absolute top-[35%] left-[18%] text-white text-lg md:text-2xl">🧋</div>
+        <div className="absolute top-[38%] left-[88%] text-white text-xl md:text-3xl">🍭</div>
+        <div className="absolute top-[55%] left-[20%] text-white text-lg md:text-2xl">🧉</div>
+        <div className="absolute top-[58%] left-[95%] text-white text-xl md:text-3xl">🥖</div>
+        <div className="absolute top-[75%] left-[32%] text-white text-lg md:text-2xl">🍮</div>
+        <div className="absolute top-[14%] left-[62%] text-white text-lg md:text-2xl">🥣</div>
+        <div className="absolute top-[34%] left-[44%] text-white text-xl md:text-3xl">🧇</div>
+        <div className="absolute top-[54%] left-[8%] text-white text-lg md:text-2xl">🥧</div>
+        <div className="absolute top-[74%] left-[78%] text-white text-xl md:text-3xl">🍪</div>
         
-        {/* Desktop - Additional 20 icons */}
-        <div className="hidden md:block absolute top-[7%] left-[40%] text-white text-2xl">🍍</div>
-        <div className="hidden md:block absolute top-[13%] left-[55%] text-white text-3xl">🥝</div>
-        <div className="hidden md:block absolute top-[9%] left-[78%] text-white text-2xl">🍈</div>
-        <div className="hidden md:block absolute top-[20%] left-[12%] text-white text-3xl">🥭</div>
-        <div className="hidden md:block absolute top-[23%] left-[45%] text-white text-2xl">🍐</div>
-        <div className="hidden md:block absolute top-[29%] left-[70%] text-white text-3xl">🍏</div>
-        <div className="hidden md:block absolute top-[32%] left-[25%] text-white text-2xl">🥔</div>
-        <div className="hidden md:block absolute top-[37%] left-[42%] text-white text-3xl">🫛</div>
-        <div className="hidden md:block absolute top-[40%] left-[68%] text-white text-2xl">🌶️</div>
-        <div className="hidden md:block absolute top-[44%] left-[15%] text-white text-3xl">🍆</div>
-        <div className="hidden md:block absolute top-[50%] left-[32%] text-white text-2xl">🥕</div>
-        <div className="hidden md:block absolute top-[53%] left-[78%] text-white text-3xl">🥒</div>
-        <div className="hidden md:block absolute top-[56%] left-[48%] text-white text-2xl">🫑</div>
-        <div className="hidden md:block absolute top-[63%] left-[8%] text-white text-3xl">🥬</div>
-        <div className="hidden md:block absolute top-[69%] left-[28%] text-white text-2xl">🥦</div>
-        <div className="hidden md:block absolute top-[72%] left-[55%] text-white text-3xl">🌽</div>
-        <div className="hidden md:block absolute top-[77%] left-[15%] text-white text-2xl">🍅</div>
-        <div className="hidden md:block absolute top-[80%] left-[58%] text-white text-3xl">🍓</div>
-        <div className="hidden md:block absolute top-[86%] left-[78%] text-white text-2xl">🫐</div>
-        <div className="hidden md:block absolute top-[92%] left-[12%] text-white text-3xl">🍇</div>
+        {/* Desktop - Additional 25 icons */}
+        <div className="hidden md:block absolute top-[7%] left-[40%] text-white text-2xl">🧊</div>
+        <div className="hidden md:block absolute top-[13%] left-[55%] text-white text-3xl">🥛</div>
+        <div className="hidden md:block absolute top-[9%] left-[78%] text-white text-2xl">🍺</div>
+        <div className="hidden md:block absolute top-[20%] left-[12%] text-white text-3xl">🍿</div>
+        <div className="hidden md:block absolute top-[23%] left-[45%] text-white text-2xl">🥚</div>
+        <div className="hidden md:block absolute top-[29%] left-[70%] text-white text-3xl">🛢️</div>
+        <div className="hidden md:block absolute top-[32%] left-[25%] text-white text-2xl">🍚</div>
+        <div className="hidden md:block absolute top-[37%] left-[42%] text-white text-3xl">🧈</div>
+        <div className="hidden md:block absolute top-[40%] left-[68%] text-white text-2xl">🌾</div>
+        <div className="hidden md:block absolute top-[44%] left-[15%] text-white text-3xl">💄</div>
+        <div className="hidden md:block absolute top-[50%] left-[32%] text-white text-2xl">🥤</div>
+        <div className="hidden md:block absolute top-[53%] left-[78%] text-white text-3xl">🍶</div>
+        <div className="hidden md:block absolute top-[56%] left-[48%] text-white text-2xl">🥜</div>
+        <div className="hidden md:block absolute top-[63%] left-[8%] text-white text-3xl">🧴</div>
+        <div className="hidden md:block absolute top-[69%] left-[28%] text-white text-2xl">☕</div>
+        <div className="hidden md:block absolute top-[72%] left-[55%] text-white text-3xl">🫘</div>
+        <div className="hidden md:block absolute top-[77%] left-[15%] text-white text-2xl">🧃</div>
+        <div className="hidden md:block absolute top-[80%] left-[58%] text-white text-3xl">🧋</div>
+        <div className="hidden md:block absolute top-[86%] left-[78%] text-white text-2xl">🍵</div>
+        <div className="hidden md:block absolute top-[92%] left-[12%] text-white text-3xl">🥫</div>
+        <div className="hidden md:block absolute top-[17%] left-[33%] text-white text-2xl">🧂</div>
+        <div className="hidden md:block absolute top-[26%] left-[87%] text-white text-3xl">🍯</div>
+        <div className="hidden md:block absolute top-[46%] left-[58%] text-white text-2xl">🧼</div>
+        <div className="hidden md:block absolute top-[66%] left-[42%] text-white text-3xl">🍞</div>
+        <div className="hidden md:block absolute top-[88%] left-[35%] text-white text-2xl">🥣</div>
       </div>
       
       <div className="container mx-auto px-1 relative z-10">
         {/* Desktop Layout */}
-        <div className="hidden md:flex items-center justify-between py-4">
+        <div className="hidden md:flex items-center justify-between h-20">
           {/* Logo and Location */}
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-6 w-64 flex-shrink-0">
             <div>
-              <Link href="/" className="text-2xl font-bold text-gray-900">
+              <Link href="/" className="text-2xl font-extrabold uppercase bg-gradient-to-r from-green-800 to-green-600 bg-clip-text text-transparent whitespace-nowrap">
                 Shree Grocery Mart
               </Link>
               <div className="flex items-center gap-2 text-xs mt-1">
@@ -298,8 +308,8 @@ export default function Header() {
         <div className="md:hidden py-3">
           {/* Top Row: Logo */}
           <div className="flex items-center justify-center mb-3">
-            <Link href="/" className="text-xl font-bold text-gray-900">
-              Shree Grocery Mart
+            <Link href="/" className="text-xl font-extrabold uppercase bg-gradient-to-r from-green-800 to-green-600 bg-clip-text text-transparent whitespace-nowrap">
+              SHREE GROCERY MART
             </Link>
           </div>
 
@@ -341,41 +351,56 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Category Navigation Bar */}
-        <div className="bg-white">
-          <div className="container mx-auto px-1">
-            <div className="flex items-center gap-6 py-3 overflow-x-auto scrollbar-hide">
-              <Link
-                href="/"
-                className="flex flex-col items-center gap-1.5 min-w-fit group"
-              >
-                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center group-hover:bg-green-600 transition-colors">
-                  <ShoppingCart className="w-5 h-5 text-green-600 group-hover:text-white" />
-                </div>
-                <span className="text-xs font-medium text-gray-700 group-hover:text-green-600 transition-colors text-center">
-                  All Products
-                </span>
-              </Link>
-              {categories.map((category) => {
-                const Icon = getCategoryIcon(category.slug)
-                return (
-                  <Link
-                    key={category.id}
-                    href={`/category/${category.slug}`}
-                    className="flex flex-col items-center gap-1.5 min-w-fit group"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center group-hover:bg-green-600 transition-colors">
-                      <Icon className="w-5 h-5 text-green-600 group-hover:text-white" />
-                    </div>
-                    <span className="text-xs font-medium text-gray-700 group-hover:text-green-600 transition-colors text-center max-w-[80px]">
-                      {category.name}
-                    </span>
-                  </Link>
-                )
-              })}
+        {/* Category Navigation Bar - Hidden on cart, checkout, account, orders, and wishlist pages */}
+        {pathname !== '/cart' && pathname !== '/checkout' && pathname !== '/account' && pathname !== '/orders' && pathname !== '/wishlist' && (
+          <div className="bg-white">
+            <div className="container mx-auto px-1">
+              <div className="flex items-start gap-4 md:gap-6 overflow-x-auto scrollbar-hide mt-[2px] pb-2">
+                <Link
+                  href="/"
+                  className="flex flex-col items-center gap-1 min-w-[70px] group"
+                >
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center group-hover:bg-green-600 transition-colors flex-shrink-0 ${
+                    pathname === '/' ? 'bg-green-600' : 'bg-green-100'
+                  }`}>
+                    <ShoppingCart className={`w-5 h-5 group-hover:text-white transition-colors ${
+                      pathname === '/' ? 'text-white' : 'text-green-600'
+                    }`} />
+                  </div>
+                  <span className={`text-[10px] md:text-xs font-medium group-hover:text-green-600 transition-colors text-center leading-tight w-full ${
+                    pathname === '/' ? 'text-green-600 font-semibold' : 'text-gray-700'
+                  }`}>
+                    All Products
+                  </span>
+                </Link>
+                {categories.map((category) => {
+                  const Icon = getCategoryIcon(category.slug)
+                  const isActive = pathname === `/category/${category.slug}`
+                  return (
+                    <Link
+                      key={category.id}
+                      href={`/category/${category.slug}`}
+                      className="flex flex-col items-center gap-1 min-w-[70px] group"
+                    >
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center group-hover:bg-green-600 transition-colors flex-shrink-0 ${
+                        isActive ? 'bg-green-600' : 'bg-green-100'
+                      }`}>
+                        <Icon className={`w-5 h-5 group-hover:text-white transition-colors ${
+                          isActive ? 'text-white' : 'text-green-600'
+                        }`} />
+                      </div>
+                      <span className={`text-[10px] md:text-xs font-medium group-hover:text-green-600 transition-colors text-center leading-tight w-full break-words ${
+                        isActive ? 'text-green-600 font-semibold' : 'text-gray-700'
+                      }`}>
+                        {category.name}
+                      </span>
+                    </Link>
+                  )
+                })}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </header>
   )

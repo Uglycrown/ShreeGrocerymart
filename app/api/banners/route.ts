@@ -26,21 +26,31 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+    const db = await getDb()
 
-    const banner = await prisma.banner.create({
-      data: {
-        title: body.title,
-        subtitle: body.subtitle,
-        image: body.image,
-        link: body.link,
-        ctaText: body.ctaText,
-        type: body.type || 'PROMOTIONAL',
-        order: body.order || 0,
-        isActive: body.isActive ?? true,
-      },
+    const banner = await db.collection('Banner').insertOne({
+      title: body.title,
+      subtitle: body.subtitle,
+      image: body.image,
+      link: body.link,
+      ctaText: body.ctaText,
+      type: body.type || 'PROMOTIONAL',
+      order: body.order || 0,
+      isActive: body.isActive ?? true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     })
 
-    return NextResponse.json(banner, { status: 201 })
+    const newBanner = await db.collection('Banner').findOne({ _id: banner.insertedId })
+    
+    if (!newBanner) {
+      return NextResponse.json({ error: 'Failed to retrieve created banner' }, { status: 500 })
+    }
+
+    return NextResponse.json({
+      ...newBanner,
+      id: newBanner._id.toString(),
+    }, { status: 201 })
   } catch (error) {
     console.error('Error creating banner:', error)
     return NextResponse.json({ error: 'Failed to create banner' }, { status: 500 })

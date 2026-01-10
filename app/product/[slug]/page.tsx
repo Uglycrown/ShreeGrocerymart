@@ -88,10 +88,13 @@ export default function ProductPage() {
     if (!product) return
     addItem({
       id: product.id,
+      productId: product.id,
       name: product.name,
       price: product.price,
       image: product.images[0],
       unit: product.unit,
+      quantity: 1,
+      deliveryTime: product.deliveryTime || 10,
     })
   }
 
@@ -388,7 +391,7 @@ export default function ProductPage() {
         {relatedProducts.length > 0 && (
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Similar Products</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
               {relatedProducts.map((relatedProduct) => {
                 const relatedSlug = relatedProduct.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
                 return (
