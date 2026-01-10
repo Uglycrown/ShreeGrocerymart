@@ -140,27 +140,27 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-gradient-to-b from-green-400 to-green-200 shadow-md relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-30 pointer-events-none">
-        {/* Top Row - More Spread Out */}
-        <div className="absolute top-2 left-8 text-white text-4xl">🥕</div>
-        <div className="absolute top-2 left-1/6 text-white text-3xl">🍎</div>
-        <div className="absolute top-2 left-1/4 text-white text-4xl">🥬</div>
-        <div className="absolute top-2 left-1/3 text-white text-3xl">🍅</div>
-        <div className="absolute top-2 left-1/2 text-white text-4xl">🍆</div>
-        <div className="absolute top-2 right-1/3 text-white text-3xl">🥔</div>
-        <div className="absolute top-2 right-1/4 text-white text-4xl">🌽</div>
-        <div className="absolute top-2 right-1/6 text-white text-3xl">🥦</div>
-        <div className="absolute top-2 right-8 text-white text-4xl">🍊</div>
+        {/* Top Row - Mobile optimized spacing */}
+        <div className="absolute top-2 left-2 text-white text-2xl md:text-4xl md:left-8">🥕</div>
+        <div className="absolute top-2 left-[15%] text-white text-xl md:text-3xl md:left-1/6">🍎</div>
+        <div className="absolute top-2 left-1/4 text-white text-2xl md:text-4xl">🥬</div>
+        <div className="absolute top-2 left-1/3 text-white text-xl md:text-3xl">🍅</div>
+        <div className="absolute top-2 left-1/2 text-white text-2xl md:text-4xl">🍆</div>
+        <div className="absolute top-2 right-1/3 text-white text-xl md:text-3xl">🥔</div>
+        <div className="absolute top-2 right-1/4 text-white text-2xl md:text-4xl">🌽</div>
+        <div className="absolute top-2 right-[15%] text-white text-xl md:text-3xl md:right-1/6">🥦</div>
+        <div className="absolute top-2 right-2 text-white text-2xl md:text-4xl md:right-8">🍊</div>
         
-        {/* Bottom Row - More Spread Out */}
-        <div className="absolute bottom-2 left-8 text-white text-4xl">🥒</div>
-        <div className="absolute bottom-2 left-1/6 text-white text-3xl">🍋</div>
-        <div className="absolute bottom-2 left-1/4 text-white text-4xl">🍌</div>
-        <div className="absolute bottom-2 left-1/3 text-white text-3xl">🫐</div>
-        <div className="absolute bottom-2 left-1/2 text-white text-4xl">🍓</div>
-        <div className="absolute bottom-2 right-1/3 text-white text-3xl">🍇</div>
-        <div className="absolute bottom-2 right-1/4 text-white text-4xl">🥑</div>
-        <div className="absolute bottom-2 right-1/6 text-white text-3xl">🍉</div>
-        <div className="absolute bottom-2 right-8 text-white text-4xl">🥭</div>
+        {/* Bottom Row - Mobile optimized spacing */}
+        <div className="absolute bottom-2 left-2 text-white text-2xl md:text-4xl md:left-8">🥒</div>
+        <div className="absolute bottom-2 left-[15%] text-white text-xl md:text-3xl md:left-1/6">🍋</div>
+        <div className="absolute bottom-2 left-1/4 text-white text-2xl md:text-4xl">🍌</div>
+        <div className="absolute bottom-2 left-1/3 text-white text-xl md:text-3xl">🫐</div>
+        <div className="absolute bottom-2 left-1/2 text-white text-2xl md:text-4xl">🍓</div>
+        <div className="absolute bottom-2 right-1/3 text-white text-xl md:text-3xl">🍇</div>
+        <div className="absolute bottom-2 right-1/4 text-white text-2xl md:text-4xl">🥑</div>
+        <div className="absolute bottom-2 right-[15%] text-white text-xl md:text-3xl md:right-1/6">🍉</div>
+        <div className="absolute bottom-2 right-2 text-white text-2xl md:text-4xl md:right-8">🥭</div>
         
         {/* Extra for larger screens */}
         <div className="hidden lg:block absolute top-2 left-2/3 text-white text-4xl">🥜</div>
