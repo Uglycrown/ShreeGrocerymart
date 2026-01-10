@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts",
+    "seed:grocery": "tsx prisma/seed-grocery.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
