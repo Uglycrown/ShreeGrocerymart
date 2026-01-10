@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/mongodb'
 import { ObjectId } from 'mongodb'
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const db = await getDb()
-    const order = await db.collection('Order').findOne({ _id: new ObjectId(params.id) })
+    const order = await db.collection('Order').findOne({ _id: new ObjectId(id) })
     if (!order) return NextResponse.json({ message: 'Order not found' }, { status: 404 })
     return NextResponse.json({
       id: order._id.toString(), orderNumber: order.orderNumber, userId: order.userId?.toString(),
@@ -20,14 +21,15 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params
     const data = await request.json()
     const db = await getDb()
     const updateData: any = { updatedAt: new Date() }
     if (data.status) updateData.status = data.status
     if (data.paymentStatus) updateData.paymentStatus = data.paymentStatus
-    const result = await db.collection('Order').updateOne({ _id: new ObjectId(params.id) }, { $set: updateData })
+    const result = await db.collection('Order').updateOne({ _id: new ObjectId(id) }, { $set: updateData })
     if (result.matchedCount === 0) return NextResponse.json({ message: 'Order not found' }, { status: 404 })
     return NextResponse.json({ message: 'Order updated successfully' })
   } catch (error) {
