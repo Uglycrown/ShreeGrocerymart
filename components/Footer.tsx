@@ -159,8 +159,16 @@ export default function Footer() {
             <p className="text-sm text-gray-400 text-center md:text-left">
               © {currentYear} Shree Grocery Mart. All rights reserved.
             </p>
-            <div className="flex items-center gap-4 text-sm text-gray-400">
-              <span>Made with ❤️ in India</span>
+            <div className="flex items-center gap-2 text-sm text-gray-400">
+              <span>Crafted with excellence by</span>
+              <a 
+                href="https://dreamyhook.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-green-500 hover:text-green-400 font-semibold transition-colors"
+              >
+                DreamyHook
+              </a>
             </div>
           </div>
         </div>
