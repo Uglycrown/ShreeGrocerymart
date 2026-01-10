@@ -234,32 +234,11 @@ export default function Header() {
 
         {/* Mobile Layout */}
         <div className="md:hidden py-3">
-          {/* Top Row: Logo, Account, Cart */}
+          {/* Top Row: Logo */}
           <div className="flex items-center justify-between mb-3">
             <Link href="/" className="text-xl font-bold text-green-600">
               Shree Grocery Mart
             </Link>
-            
-            <div className="flex items-center gap-4">
-              {user ? (
-                <div className="text-gray-700">
-                  <User className="w-6 h-6" />
-                </div>
-              ) : (
-                <Link href="/login" className="text-gray-700 hover:text-green-600">
-                  <User className="w-6 h-6" />
-                </Link>
-              )}
-              
-              <Link href="/cart" className="relative">
-                <ShoppingCart className="w-6 h-6 text-gray-700" />
-                {mounted && itemCount > 0 && (
-                  <div className="absolute -top-2 -right-2 bg-green-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {itemCount}
-                  </div>
-                )}
-              </Link>
-            </div>
           </div>
 
           {/* Bottom Row: Search Bar */}
