@@ -195,7 +195,7 @@ export default function Header() {
           </div>
 
           {/* User Actions */}
-          <div className="flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-6">
             {user ? (
               <div className="flex items-center gap-2 text-gray-700">
                 <User className="w-5 h-5" />
