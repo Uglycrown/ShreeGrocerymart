@@ -1,6 +1,6 @@
 'use client'
 
-import { ShoppingCart, MapPin, Search, User } from 'lucide-react'
+import { ShoppingCart, MapPin, Search, User, Milk, Soup, Wheat, Droplet, Flame, Apple, Cookie, Coffee } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCartStore } from '@/lib/store'
@@ -33,6 +33,21 @@ export default function Header() {
   const searchRef = useRef<HTMLDivElement>(null)
   const itemCount = getItemsCount()
   const total = getTotal()
+
+  // Category icon mapping
+  const getCategoryIcon = (slug: string) => {
+    const iconMap: { [key: string]: any } = {
+      'dairy-eggs': Milk,
+      'dals-pulses': Soup,
+      'atta-rice-dal': Wheat,
+      'oils-ghee': Droplet,
+      'masala-spices': Flame,
+      'fruits-vegetables': Apple,
+      'snacks-namkeen': Cookie,
+      'beverages': Coffee,
+    }
+    return iconMap[slug] || Apple
+  }
 
   useEffect(() => {
     setMounted(true)
@@ -275,24 +290,37 @@ export default function Header() {
         </div>
 
         {/* Category Navigation Bar */}
-        <div className="border-t border-gray-200">
+        <div className="border-t border-gray-200 bg-gray-50">
           <div className="container mx-auto px-4">
-            <div className="flex items-center gap-6 py-3 overflow-x-auto scrollbar-hide">
+            <div className="flex items-center gap-8 py-4 overflow-x-auto scrollbar-hide">
               <Link
                 href="/"
-                className="text-sm font-medium text-gray-700 hover:text-green-600 whitespace-nowrap transition-colors"
+                className="flex flex-col items-center gap-2 min-w-fit group"
               >
-                All Products
+                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center group-hover:bg-green-600 transition-colors">
+                  <ShoppingCart className="w-6 h-6 text-green-600 group-hover:text-white" />
+                </div>
+                <span className="text-xs font-medium text-gray-700 group-hover:text-green-600 transition-colors text-center">
+                  All Products
+                </span>
               </Link>
-              {categories.map((category) => (
-                <Link
-                  key={category.id}
-                  href={`/category/${category.slug}`}
-                  className="text-sm font-medium text-gray-700 hover:text-green-600 whitespace-nowrap transition-colors"
-                >
-                  {category.name}
-                </Link>
-              ))}
+              {categories.map((category) => {
+                const Icon = getCategoryIcon(category.slug)
+                return (
+                  <Link
+                    key={category.id}
+                    href={`/category/${category.slug}`}
+                    className="flex flex-col items-center gap-2 min-w-fit group"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center group-hover:bg-green-600 transition-colors">
+                      <Icon className="w-6 h-6 text-green-600 group-hover:text-white" />
+                    </div>
+                    <span className="text-xs font-medium text-gray-700 group-hover:text-green-600 transition-colors text-center max-w-[80px]">
+                      {category.name}
+                    </span>
+                  </Link>
+                )
+              })}
             </div>
           </div>
         </div>
