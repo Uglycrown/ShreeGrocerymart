@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { useCartStore } from '@/lib/store'
 import { formatPrice, calculateDiscount } from '@/lib/utils'
 import { Clock, Minus, Plus } from 'lucide-react'
@@ -26,9 +27,15 @@ export default function ProductCard({
   deliveryTime,
   stock,
 }: ProductCardProps) {
+  const router = useRouter()
   const { items, addItem, updateQuantity } = useCartStore()
   const cartItem = items.find((item) => item.productId === id)
   const quantity = cartItem?.quantity || 0
+
+  const handleCardClick = () => {
+    const slug = name.toLowerCase().replace(/\s+/g, '-')
+    router.push(`/product/${slug}`)
+  }
 
   const handleAdd = () => {
     console.log('Adding to cart:', { id, name, price })
@@ -45,15 +52,24 @@ export default function ProductCard({
     })
   }
 
-  const handleUpdateQuantity = (newQuantity: number) => {
+  const handleUpdateQuantity = (newQuantity: number, e?: React.MouseEvent) => {
+    e?.stopPropagation()
     console.log('Updating quantity:', { id, currentQuantity: quantity, newQuantity })
     updateQuantity(id, newQuantity)
+  }
+
+  const handleAddClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    handleAdd()
   }
 
   const discount = originalPrice ? calculateDiscount(originalPrice, price) : 0
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-lg transition-shadow">
+    <div 
+      onClick={handleCardClick}
+      className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-lg transition-shadow cursor-pointer"
+    >
       {/* Product Image */}
       <div className="relative aspect-square mb-3">
         <Image
@@ -91,7 +107,7 @@ export default function ProductCard({
         {/* Add to Cart Button */}
         {quantity === 0 ? (
           <button
-            onClick={handleAdd}
+            onClick={handleAddClick}
             disabled={stock === 0}
             className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
@@ -100,14 +116,14 @@ export default function ProductCard({
         ) : (
           <div className="flex items-center justify-between bg-green-600 text-white font-semibold py-2 px-4 rounded-lg">
             <button
-              onClick={() => handleUpdateQuantity(quantity - 1)}
+              onClick={(e) => handleUpdateQuantity(quantity - 1, e)}
               className="hover:bg-green-700 p-1 rounded"
             >
               <Minus className="w-4 h-4" />
             </button>
             <span>{quantity}</span>
             <button
-              onClick={() => handleUpdateQuantity(quantity + 1)}
+              onClick={(e) => handleUpdateQuantity(quantity + 1, e)}
               disabled={quantity >= stock}
               className="hover:bg-green-700 p-1 rounded disabled:opacity-50"
             >
