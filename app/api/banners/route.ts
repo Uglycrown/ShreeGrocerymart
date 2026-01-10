@@ -1,0 +1,48 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getDb } from '@/lib/mongodb'
+
+// GET all banners
+export async function GET() {
+  try {
+    const db = await getDb()
+    const banners = await db.collection('Banner')
+      .find({ isActive: true })
+      .sort({ order: 1 })
+      .toArray()
+
+    const bannersWithId = banners.map(banner => ({
+      ...banner,
+      id: banner._id.toString(),
+    }))
+
+    return NextResponse.json(bannersWithId)
+  } catch (error) {
+    console.error('Error fetching banners:', error)
+    return NextResponse.json({ error: 'Failed to fetch banners' }, { status: 500 })
+  }
+}
+
+// POST create new banner (admin only)
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+
+    const banner = await prisma.banner.create({
+      data: {
+        title: body.title,
+        subtitle: body.subtitle,
+        image: body.image,
+        link: body.link,
+        ctaText: body.ctaText,
+        type: body.type || 'PROMOTIONAL',
+        order: body.order || 0,
+        isActive: body.isActive ?? true,
+      },
+    })
+
+    return NextResponse.json(banner, { status: 201 })
+  } catch (error) {
+    console.error('Error creating banner:', error)
+    return NextResponse.json({ error: 'Failed to create banner' }, { status: 500 })
+  }
+}

@@ -1,65 +1,216 @@
-import Image from "next/image";
+'use client'
+
+import { useState, useEffect } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+import ProductCard from '@/components/products/ProductCard'
+import CartSidebar from '@/components/cart/CartSidebar'
+import { ChevronRight, ShoppingBag } from 'lucide-react'
 
 export default function Home() {
+  const [products, setProducts] = useState<any[]>([])
+  const [categories, setCategories] = useState<any[]>([])
+  const [banners, setBanners] = useState<any[]>([])
+  const [isCartOpen, setIsCartOpen] = useState(false)
+
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  const fetchData = async () => {
+    try {
+      const [productsRes, categoriesRes, bannersRes] = await Promise.all([
+        fetch('/api/products'),
+        fetch('/api/categories'),
+        fetch('/api/banners'),
+      ])
+
+      const [productsData, categoriesData, bannersData] = await Promise.all([
+        productsRes.json(),
+        categoriesRes.json(),
+        bannersRes.json(),
+      ])
+
+      setProducts(productsData)
+      setCategories(categoriesData)
+      setBanners(bannersData)
+    } catch (error) {
+      console.error('Error fetching data:', error)
+    }
+  }
+
+  const heroBanner = banners.find((b) => b.type === 'HERO')
+  const categoryBanners = banners.filter((b) => b.type === 'CATEGORY')
+  const featuredProducts = products.filter((p) => p.isFeatured)
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Banner */}
+      {heroBanner && (
+        <section className="bg-gradient-to-r from-green-400 to-green-600 py-16 px-4">
+          <div className="container mx-auto text-white">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">{heroBanner.title}</h1>
+            {heroBanner.subtitle && (
+              <p className="text-xl mb-6">{heroBanner.subtitle}</p>
+            )}
+            {heroBanner.link && (
+              <Link
+                href={heroBanner.link}
+                className="inline-block bg-white text-green-600 font-semibold px-8 py-3 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                {heroBanner.ctaText || 'Shop Now'}
+              </Link>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Category Banners */}
+      {categoryBanners.length > 0 && (
+        <section className="container mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {categoryBanners.slice(0, 3).map((banner) => (
+              <Link
+                key={banner.id}
+                href={banner.link || '#'}
+                className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow"
+              >
+                <div className="relative h-48">
+                  <Image
+                    src={banner.image || '/placeholder.png'}
+                    alt={banner.title}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div className="p-4">
+                  <h3 className="font-bold text-lg mb-2 text-gray-900">{banner.title}</h3>
+                  {banner.subtitle && (
+                    <p className="text-sm text-gray-600 mb-3">{banner.subtitle}</p>
+                  )}
+                  <span className="text-green-600 font-semibold">
+                    {banner.ctaText || 'Order Now'} →
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Categories Grid */}
+      <section className="container mx-auto px-4 py-8">
+        <h2 className="text-2xl font-bold mb-6 text-gray-900">Shop by Category</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {categories.slice(0, 20).map((category) => (
+            <Link
+              key={category.id}
+              href={`/category/${category.slug}`}
+              className="bg-white rounded-lg p-4 text-center hover:shadow-lg transition-shadow"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              {category.image && (
+                <div className="relative w-20 h-20 mx-auto mb-3">
+                  <Image
+                    src={category.image}
+                    alt={category.name}
+                    fill
+                    className="object-cover rounded-full"
+                  />
+                </div>
+              )}
+              <h3 className="font-semibold text-sm text-gray-900">{category.name}</h3>
+            </Link>
+          ))}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      </section>
+
+      {/* Featured Products */}
+      {featuredProducts.length > 0 && (
+        <section className="container mx-auto px-4 py-8">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Featured Products</h2>
+            <Link href="/products" className="text-green-600 font-semibold flex items-center gap-1">
+              See all <ChevronRight className="w-5 h-5" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {featuredProducts.slice(0, 12).map((product) => (
+              <ProductCard
+                key={product.id}
+                id={product.id}
+                name={product.name}
+                image={product.images[0]}
+                price={product.price}
+                originalPrice={product.originalPrice}
+                unit={product.unit}
+                deliveryTime={product.deliveryTime}
+                stock={product.stock}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* All Products by Category */}
+      {categories.map((category) => {
+        const categoryProducts = products.filter((p) => p.categoryId === category.id).slice(0, 6)
+        if (categoryProducts.length === 0) return null
+
+        return (
+          <section key={category.id} className="container mx-auto px-4 py-8">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">{category.name}</h2>
+              <Link
+                href={`/category/${category.slug}`}
+                className="text-green-600 font-semibold flex items-center gap-1"
+              >
+                See all <ChevronRight className="w-5 h-5" />
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {categoryProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  id={product.id}
+                  name={product.name}
+                  image={product.images[0]}
+                  price={product.price}
+                  originalPrice={product.originalPrice}
+                  unit={product.unit}
+                  deliveryTime={product.deliveryTime}
+                  stock={product.stock}
+                />
+              ))}
+            </div>
+          </section>
+        )
+      })}
+
+      {/* Empty State */}
+      {products.length === 0 && (
+        <div className="container mx-auto px-4 py-16 text-center">
+          <ShoppingBag className="w-24 h-24 text-gray-300 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-2 text-gray-900">No products available</h2>
+          <p className="text-gray-600 mb-6">Start adding products from the admin dashboard</p>
+          <Link
+            href="/admin"
+            className="inline-block bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            Go to Admin Dashboard
+          </Link>
         </div>
-      </main>
+      )}
+
+      {/* Cart Sidebar */}
+      <CartSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+
+      {/* Floating Cart Button */}
+      <button
+        onClick={() => setIsCartOpen(true)}
+        className="fixed bottom-6 right-6 bg-green-600 text-white p-4 rounded-full shadow-lg hover:bg-green-700 transition-colors z-30"
+      >
+        <ShoppingBag className="w-6 h-6" />
+      </button>
     </div>
-  );
+  )
 }
