@@ -170,7 +170,7 @@ export default function AdminDashboard() {
       <div className="bg-white shadow">
         <div className="container mx-auto px-4 py-6">
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600">Manage your e-commerce store</p>
+          <p className="text-gray-800">Manage your e-commerce store</p>
         </div>
       </div>
 
@@ -182,7 +182,7 @@ export default function AdminDashboard() {
             className={`flex items-center gap-2 px-6 py-3 font-semibold border-b-2 transition-colors ${
               activeTab === 'products'
                 ? 'border-green-600 text-green-600'
-                : 'border-transparent text-gray-600 hover:text-gray-900'
+                : 'border-transparent text-gray-800 hover:text-gray-900'
             }`}
           >
             <Package className="w-5 h-5" />
@@ -193,7 +193,7 @@ export default function AdminDashboard() {
             className={`flex items-center gap-2 px-6 py-3 font-semibold border-b-2 transition-colors ${
               activeTab === 'categories'
                 ? 'border-green-600 text-green-600'
-                : 'border-transparent text-gray-600 hover:text-gray-900'
+                : 'border-transparent text-gray-800 hover:text-gray-900'
             }`}
           >
             <Tag className="w-5 h-5" />
@@ -204,7 +204,7 @@ export default function AdminDashboard() {
             className={`flex items-center gap-2 px-6 py-3 font-semibold border-b-2 transition-colors ${
               activeTab === 'banners'
                 ? 'border-green-600 text-green-600'
-                : 'border-transparent text-gray-600 hover:text-gray-900'
+                : 'border-transparent text-gray-800 hover:text-gray-900'
             }`}
           >
             <ImageIcon className="w-5 h-5" />
@@ -215,7 +215,7 @@ export default function AdminDashboard() {
             className={`flex items-center gap-2 px-6 py-3 font-semibold border-b-2 transition-colors ${
               activeTab === 'orders'
                 ? 'border-green-600 text-green-600'
-                : 'border-transparent text-gray-600 hover:text-gray-900'
+                : 'border-transparent text-gray-800 hover:text-gray-900'
             }`}
           >
             <ShoppingBag className="w-5 h-5" />
@@ -255,12 +255,12 @@ export default function AdminDashboard() {
                     <table className="w-full border-collapse">
                       <thead className="bg-gray-50">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Image</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Image</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Name</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Category</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Price</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Stock</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
@@ -315,7 +315,7 @@ export default function AdminDashboard() {
                     </table>
                   </div>
                   {products.length === 0 && (
-                    <div className="text-center py-12 text-gray-500">
+                    <div className="text-center py-12 text-gray-700">
                       No products found. Create your first product!
                     </div>
                   )}

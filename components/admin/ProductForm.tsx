@@ -119,7 +119,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
     <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
       {/* Product Name */}
       <div>
-        <label className="block text-sm font-medium mb-2">Product Name *</label>
+        <label className="block text-sm font-medium mb-2 text-gray-900">Product Name *</label>
         <input
           type="text"
           required
@@ -132,7 +132,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
 
       {/* Description */}
       <div>
-        <label className="block text-sm font-medium mb-2">Description</label>
+        <label className="block text-sm font-medium mb-2 text-gray-900">Description</label>
         <textarea
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -144,7 +144,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
 
       {/* Category */}
       <div>
-        <label className="block text-sm font-medium mb-2">Category *</label>
+        <label className="block text-sm font-medium mb-2 text-gray-900">Category *</label>
         <select
           required
           value={formData.categoryId}
@@ -163,7 +163,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
       {/* Price & Original Price */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-2">Price (₹) *</label>
+          <label className="block text-sm font-medium mb-2 text-gray-900">Price (₹) *</label>
           <input
             type="number"
             required
@@ -175,7 +175,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-2">Original Price (₹)</label>
+          <label className="block text-sm font-medium mb-2 text-gray-900">Original Price (₹)</label>
           <input
             type="number"
             min="0"
@@ -192,7 +192,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
       {/* Unit & Stock */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-2">Unit *</label>
+          <label className="block text-sm font-medium mb-2 text-gray-900">Unit *</label>
           <input
             type="text"
             required
@@ -203,7 +203,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-2">Stock *</label>
+          <label className="block text-sm font-medium mb-2 text-gray-900">Stock *</label>
           <input
             type="number"
             required
@@ -217,7 +217,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
 
       {/* Delivery Time */}
       <div>
-        <label className="block text-sm font-medium mb-2">Delivery Time (minutes)</label>
+        <label className="block text-sm font-medium mb-2 text-gray-900">Delivery Time (minutes)</label>
         <input
           type="number"
           min="1"
@@ -229,7 +229,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
 
       {/* Images */}
       <div>
-        <label className="block text-sm font-medium mb-2">Product Images</label>
+        <label className="block text-sm font-medium mb-2 text-gray-900">Product Images</label>
         <div className="grid grid-cols-4 gap-4 mb-4">
           {formData.images.map((img, index) => (
             <div key={index} className="relative aspect-square border rounded-lg overflow-hidden">
@@ -254,7 +254,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
         {/* Upload from device */}
         <div className="mb-4">
           <label className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-green-500 transition">
-            <div className="flex items-center gap-2 text-gray-600">
+            <div className="flex items-center gap-2 text-gray-800">
               <Upload className="w-5 h-5" />
               <span className="font-medium">
                 {uploading ? 'Uploading...' : 'Upload from Device'}
@@ -269,7 +269,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
               className="hidden"
             />
           </label>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-900 mt-1">
             Click to upload images (max 5MB each, supports multiple files)
           </p>
         </div>
@@ -288,13 +288,13 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
             }}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
           />
-          <p className="text-xs text-gray-500 mt-1">Press Enter to add image URL</p>
+          <p className="text-xs text-gray-900 mt-1">Press Enter to add image URL</p>
         </div>
       </div>
 
       {/* Tags */}
       <div>
-        <label className="block text-sm font-medium mb-2">Tags</label>
+        <label className="block text-sm font-medium mb-2 text-gray-900">Tags</label>
         <div className="flex flex-wrap gap-2 mb-2">
           {formData.tags.map((tag) => (
             <span
@@ -325,7 +325,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
           <button
             type="button"
             onClick={addTag}
-            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg"
+            className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-800"
           >
             Add
           </button>
@@ -367,7 +367,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
           <button
             type="button"
             onClick={onCancel}
-            className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg"
+            className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold rounded-lg"
           >
             Cancel
           </button>
