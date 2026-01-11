@@ -161,7 +161,7 @@ export default function Header() {
     return () => clearTimeout(timeout)
   }, [placeholder, isDeleting, placeholderIndex, searchPlaceholders])
 
-  const handleSearch = (e: React.FormEvent) => {vent) => {
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
       setShowSuggestions(false)
