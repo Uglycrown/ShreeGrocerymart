@@ -52,15 +52,14 @@ export default function Header() {
     'Search "butter"',
     'Search "fruits"',
     'Search "vegetables"',
-    'Search "chicken"',
-    'Search "fish"',
     'Search "spices"',
     'Search "oil"',
     'Search "flour"',
     'Search "dals"',
   ]
-  const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0)
-  const [animatedPlaceholder, setAnimatedPlaceholder] = useState(searchPlaceholders[0])
+  const [placeholderIndex, setPlaceholderIndex] = useState(0)
+  const [placeholder, setPlaceholder] = useState('')
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Category icon mapping
   const getCategoryIcon = (slug: string) => {
@@ -135,20 +134,34 @@ export default function Header() {
     return () => clearTimeout(debounceTimer)
   }, [searchQuery])
 
-  // Animate search placeholder
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentPlaceholderIndex((prevIndex) => (prevIndex + 1) % searchPlaceholders.length)
-    }, 1000) // Change every 1 second
+    const currentPlaceholder = searchPlaceholders[placeholderIndex]
+    const typingSpeed = 150
+    const deletingSpeed = 50
+    const delay = 2000
 
-    return () => clearInterval(interval)
-  }, [])
+    const handleTyping = () => {
+      if (isDeleting) {
+        if (placeholder.length > 0) {
+          setPlaceholder((prev) => prev.substring(0, prev.length - 1))
+        } else {
+          setIsDeleting(false)
+          setPlaceholderIndex((prev) => (prev + 1) % searchPlaceholders.length)
+        }
+      } else {
+        if (placeholder.length < currentPlaceholder.length) {
+          setPlaceholder((prev) => currentPlaceholder.substring(0, prev.length + 1))
+        } else {
+          setTimeout(() => setIsDeleting(true), delay)
+        }
+      }
+    }
 
-  useEffect(() => {
-    setAnimatedPlaceholder(searchPlaceholders[currentPlaceholderIndex])
-  }, [currentPlaceholderIndex])
+    const timeout = setTimeout(handleTyping, isDeleting ? deletingSpeed : typingSpeed)
+    return () => clearTimeout(timeout)
+  }, [placeholder, isDeleting, placeholderIndex, searchPlaceholders])
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = (e: React.FormEvent) => {vent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
       setShowSuggestions(false)
@@ -276,7 +289,7 @@ export default function Header() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => searchQuery.trim() && suggestions.length > 0 && setShowSuggestions(true)}
-                placeholder={animatedPlaceholder}
+                placeholder={placeholder}
                 className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white shadow-sm text-gray-900"
                 autoComplete="off"
               />
@@ -360,7 +373,7 @@ export default function Header() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => searchQuery.trim() && suggestions.length > 0 && setShowSuggestions(true)}
-                placeholder={animatedPlaceholder}
+                placeholder={placeholder}
                 className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white shadow-sm text-gray-900"
                 autoComplete="off"
               />
