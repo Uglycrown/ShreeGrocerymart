@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { CheckCircle, MapPin, Phone, FileText } from 'lucide-react'
+import { CheckCircle, MapPin, Phone, FileText, XCircle, Clock, Package, Truck } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 
 interface Order {
@@ -29,6 +29,52 @@ export default function OrderPage() {
     fetch(`/api/orders/${params.id}`).then(r => r.json()).then(setOrder).catch(() => {})
   }, [params.id])
 
+  const getStatusBadge = (status: string) => {
+    const styles: any = {
+      pending: 'bg-yellow-100 text-yellow-800',
+      confirmed: 'bg-blue-100 text-blue-800',
+      processing: 'bg-purple-100 text-purple-800',
+      out_for_delivery: 'bg-indigo-100 text-indigo-800',
+      delivered: 'bg-green-100 text-green-800',
+      cancelled: 'bg-red-100 text-red-800',
+    }
+    return styles[status] || 'bg-gray-100 text-gray-800'
+  }
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'pending': return <Clock className="w-5 h-5" />
+      case 'confirmed': return <CheckCircle className="w-5 h-5" />
+      case 'processing': return <Package className="w-5 h-5" />
+      case 'out_for_delivery': return <Truck className="w-5 h-5" />
+      case 'delivered': return <CheckCircle className="w-5 h-5" />
+      case 'cancelled': return <XCircle className="w-5 h-5" />
+      default: return <Clock className="w-5 h-5" />
+    }
+  }
+
+  const handleCancelOrder = async () => {
+    if (order && confirm('Are you sure you want to cancel this order?')) {
+      try {
+        const response = await fetch(`/api/orders/${order.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'cancelled' }),
+        })
+
+        if (response.ok) {
+          alert('Order cancelled successfully!')
+          setOrder({ ...order, status: 'cancelled' })
+        } else {
+          alert('Failed to cancel order')
+        }
+      } catch (error) {
+        console.error('Error cancelling order:', error)
+        alert('Error cancelling order')
+      }
+    }
+  }
+
   if (!order) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div></div>
 
   return (
@@ -49,6 +95,22 @@ export default function OrderPage() {
               <FileText className="w-5 h-5" />
               View Invoice
             </a>
+            {['pending', 'confirmed'].includes(order.status) && (
+              <button
+                onClick={handleCancelOrder}
+                className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-lg font-semibold transition"
+              >
+                <XCircle className="w-5 h-5" />
+                Cancel Order
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <h2 className="text-xl font-bold mb-4 text-gray-900">Order Status</h2>
+          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold ${getStatusBadge(order.status)}`}>
+            {getStatusIcon(order.status)}
+            <span>{order.status.replace('_', ' ').toUpperCase()}</span>
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
