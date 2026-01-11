@@ -279,18 +279,18 @@ export default function AdminDashboard() {
                             </td>
                             <td className="px-6 py-4">
                               <div className="font-semibold text-gray-900">{product.name}</div>
-                              <div className="text-sm text-gray-600">{product.unit}</div>
+                              <div className="text-sm text-gray-800">{product.unit}</div>
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-600">
+                            <td className="px-6 py-4 text-sm text-gray-800">
                               {product.category?.name || 'N/A'}
                             </td>
                             <td className="px-6 py-4">
                               <div className="font-bold text-gray-900">₹{product.price}</div>
                               {product.originalPrice && (
-                                <div className="text-sm text-gray-500 line-through">₹{product.originalPrice}</div>
+                                <div className="text-sm text-gray-700 line-through">₹{product.originalPrice}</div>
                               )}
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-600">{product.stock}</td>
+                            <td className="px-6 py-4 text-sm text-gray-800">{product.stock}</td>
                             <td className="px-6 py-4">
                               <div className="flex gap-2">
                                 <button
