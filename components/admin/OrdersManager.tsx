@@ -136,7 +136,7 @@ export default function OrdersManager({ onUpdate }: OrdersManagerProps) {
               className={`px-3 py-1 rounded-lg text-sm font-medium ${
                 statusFilter === status
                   ? 'bg-green-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
               }`}
             >
               {status.replace('_', ' ').toUpperCase()}
@@ -150,14 +150,14 @@ export default function OrdersManager({ onUpdate }: OrdersManagerProps) {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order #</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Items</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payment</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase">Order #</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase">Customer</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase">Items</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase">Total</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase">Payment</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase">Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -166,9 +166,9 @@ export default function OrdersManager({ onUpdate }: OrdersManagerProps) {
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">{order.orderNumber}</td>
                   <td className="px-6 py-4">
                     <div className="text-sm font-medium text-gray-900">{order.customerName}</div>
-                    <div className="text-sm text-gray-500">{order.customerPhone}</div>
+                    <div className="text-sm text-gray-900">{order.customerPhone}</div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{order.items.length} items</td>
+                  <td className="px-6 py-4 text-sm text-gray-800">{order.items.length} items</td>
                   <td className="px-6 py-4 text-sm font-semibold text-gray-900">{formatPrice(order.total)}</td>
                   <td className="px-6 py-4">
                     <select
@@ -195,7 +195,7 @@ export default function OrdersManager({ onUpdate }: OrdersManagerProps) {
                       <option value="cancelled">Cancelled</option>
                     </select>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
+                  <td className="px-6 py-4 text-sm text-gray-800">
                     {new Date(order.createdAt).toLocaleDateString('en-IN', {
                       day: 'numeric',
                       month: 'short',
@@ -229,7 +229,7 @@ export default function OrdersManager({ onUpdate }: OrdersManagerProps) {
         </div>
 
         {orders.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-gray-900">
             No orders found
           </div>
         )}
@@ -253,7 +253,7 @@ export default function OrdersManager({ onUpdate }: OrdersManagerProps) {
                   </a>
                   <button
                     onClick={() => setSelectedOrder(null)}
-                    className="text-gray-500 hover:text-gray-700 text-2xl"
+                    className="text-gray-900 hover:text-gray-900 text-2xl"
                   >
                     ✕
                   </button>
@@ -280,7 +280,7 @@ export default function OrdersManager({ onUpdate }: OrdersManagerProps) {
                     <div key={index} className="flex justify-between bg-gray-50 rounded p-3">
                       <div>
                         <p className="font-medium text-gray-900">{item.name}</p>
-                        <p className="text-sm text-gray-600">Quantity: {item.quantity}</p>
+                        <p className="text-sm text-gray-800">Quantity: {item.quantity}</p>
                       </div>
                       <p className="font-semibold text-gray-900">{formatPrice(item.price * item.quantity)}</p>
                     </div>

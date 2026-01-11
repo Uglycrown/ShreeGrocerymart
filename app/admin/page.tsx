@@ -250,7 +250,7 @@ export default function AdminDashboard() {
                 />
               ) : (
                 <div>
-                  <div className="mb-4 text-gray-600">Total Products: {products.length}</div>
+                  <div className="mb-4 text-gray-800">Total Products: {products.length}</div>
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                       <thead className="bg-gray-50">

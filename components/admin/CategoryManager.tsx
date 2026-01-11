@@ -187,7 +187,7 @@ export default function CategoryManager({ categories: initialCategories, onUpdat
               <h3 className="text-xl font-bold text-gray-900">
                 {editingId ? 'Edit Category' : 'Add New Category'}
               </h3>
-              <button onClick={resetForm} className="text-gray-500 hover:text-gray-700">
+              <button onClick={resetForm} className="text-gray-700 hover:text-gray-700">
                 <X className="w-6 h-6" />
               </button>
             </div>
@@ -248,7 +248,7 @@ export default function CategoryManager({ categories: initialCategories, onUpdat
                 {/* Upload from Device */}
                 <div className="mb-3">
                   <label className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-green-500 transition">
-                    <div className="flex items-center gap-2 text-gray-600">
+                    <div className="flex items-center gap-2 text-gray-800">
                       <Upload className="w-5 h-5" />
                       <span className="font-medium">
                         {uploading ? 'Uploading...' : 'Upload from Device'}
@@ -262,7 +262,7 @@ export default function CategoryManager({ categories: initialCategories, onUpdat
                       className="hidden"
                     />
                   </label>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-700 mt-1">
                     Click to upload image (max 5MB)
                   </p>
                 </div>
@@ -277,7 +277,7 @@ export default function CategoryManager({ categories: initialCategories, onUpdat
                     placeholder="Or paste image URL"
                     disabled={formData.image.startsWith('data:')}
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-700 mt-1">
                     Alternative: Paste an image URL
                   </p>
                 </div>
@@ -308,11 +308,11 @@ export default function CategoryManager({ categories: initialCategories, onUpdat
         <table className="w-full">
           <thead className="bg-gray-50 border-b">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Priority</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Slug</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              <th className="px-6 py-3 text-left text-gray-900">Priority</th>
+              <th className="px-6 py-3 text-left text-gray-900">Category</th>
+              <th className="px-6 py-3 text-left text-gray-900">Slug</th>
+              <th className="px-6 py-3 text-left text-gray-900">Status</th>
+              <th className="px-6 py-3 text-left text-gray-900">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -323,7 +323,7 @@ export default function CategoryManager({ categories: initialCategories, onUpdat
                     <button
                       onClick={() => handlePriorityChange(category.id, 'up')}
                       disabled={index === 0}
-                      className="text-gray-600 hover:text-green-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="text-gray-800 hover:text-green-600 disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       <MoveUp className="w-4 h-4" />
                     </button>
@@ -331,7 +331,7 @@ export default function CategoryManager({ categories: initialCategories, onUpdat
                     <button
                       onClick={() => handlePriorityChange(category.id, 'down')}
                       disabled={index === categories.length - 1}
-                      className="text-gray-600 hover:text-green-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="text-gray-800 hover:text-green-600 disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       <MoveDown className="w-4 h-4" />
                     </button>
@@ -345,12 +345,12 @@ export default function CategoryManager({ categories: initialCategories, onUpdat
                     <div>
                       <div className="font-semibold text-gray-900">{category.name}</div>
                       {category.description && (
-                        <div className="text-xs text-gray-500">{category.description}</div>
+                        <div className="text-xs text-gray-700">{category.description}</div>
                       )}
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-600">{category.slug}</td>
+                <td className="px-6 py-4 text-sm text-gray-800">{category.slug}</td>
                 <td className="px-6 py-4">
                   <button
                     onClick={() => handleToggleActive(category.id, category.isActive)}
@@ -385,7 +385,7 @@ export default function CategoryManager({ categories: initialCategories, onUpdat
         </table>
 
         {categories.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-gray-700">
             No categories found. Create your first category!
           </div>
         )}
