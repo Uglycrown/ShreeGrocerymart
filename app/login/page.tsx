@@ -68,6 +68,7 @@ export default function LoginPage() {
 
       if (response.ok) {
         localStorage.setItem('user', JSON.stringify(data.user))
+        localStorage.setItem('userPhone', phoneNumber)
         router.push('/')
       } else {
         setError(data.message || 'Invalid OTP')
