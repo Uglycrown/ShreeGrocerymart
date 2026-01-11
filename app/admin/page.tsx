@@ -343,7 +343,7 @@ export default function AdminDashboard() {
                     type="text"
                     name="title"
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900"
                     placeholder="e.g., Stock up on daily essentials"
                   />
                 </div>
@@ -352,7 +352,7 @@ export default function AdminDashboard() {
                   <input
                     type="text"
                     name="subtitle"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900"
                     placeholder="Additional description"
                   />
                 </div>
@@ -362,7 +362,7 @@ export default function AdminDashboard() {
                     type="text"
                     name="image"
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900"
                     placeholder="https://example.com/banner.png"
                   />
                 </div>
@@ -371,7 +371,7 @@ export default function AdminDashboard() {
                   <input
                     type="text"
                     name="link"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900"
                     placeholder="/category/dairy"
                   />
                 </div>
@@ -380,7 +380,7 @@ export default function AdminDashboard() {
                   <input
                     type="text"
                     name="ctaText"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900"
                     placeholder="Shop Now"
                   />
                 </div>
@@ -388,7 +388,7 @@ export default function AdminDashboard() {
                   <label className="block text-sm font-medium mb-2">Type</label>
                   <select
                     name="type"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900"
                   >
                     <option value="HERO">Hero</option>
                     <option value="CATEGORY">Category</option>

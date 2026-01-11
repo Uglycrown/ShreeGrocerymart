@@ -125,7 +125,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
           required
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
           placeholder="e.g., Amul Gold Full Cream Milk"
         />
       </div>
@@ -137,7 +137,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           rows={4}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
           placeholder="Product description..."
         />
       </div>
@@ -149,7 +149,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
           required
           value={formData.categoryId}
           onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
         >
           <option value="">Select a category</option>
           {categories.map((cat) => (
@@ -171,7 +171,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
             step="0.01"
             value={formData.price}
             onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
           />
         </div>
         <div>
@@ -184,7 +184,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
             onChange={(e) =>
               setFormData({ ...formData, originalPrice: e.target.value ? parseFloat(e.target.value) : undefined })
             }
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
           />
         </div>
       </div>
@@ -198,7 +198,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
             required
             value={formData.unit}
             onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
             placeholder="e.g., 500 ml, 1 kg"
           />
         </div>
@@ -210,7 +210,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
             min="0"
             value={formData.stock}
             onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
           />
         </div>
       </div>
@@ -223,7 +223,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
           min="1"
           value={formData.deliveryTime}
           onChange={(e) => setFormData({ ...formData, deliveryTime: parseInt(e.target.value) })}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
         />
       </div>
 
@@ -286,7 +286,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
                 e.currentTarget.value = ''
               }
             }}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
           />
           <p className="text-xs text-gray-500 mt-1">Press Enter to add image URL</p>
         </div>
