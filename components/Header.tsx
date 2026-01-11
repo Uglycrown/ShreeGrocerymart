@@ -37,6 +37,31 @@ export default function Header() {
   const total = getTotal()
   const { items: wishlistItems } = useWishlistStore()
 
+  const searchPlaceholders = [
+    'Search "milk"',
+    'Search "almonds"',
+    'Search "rice"',
+    'Search "atta"',
+    'Search "sugar"',
+    'Search "tea"',
+    'Search "coffee"',
+    'Search "bread"',
+    'Search "eggs"',
+    'Search "cheese"',
+    'Search "yogurt"',
+    'Search "butter"',
+    'Search "fruits"',
+    'Search "vegetables"',
+    'Search "chicken"',
+    'Search "fish"',
+    'Search "spices"',
+    'Search "oil"',
+    'Search "flour"',
+    'Search "dals"',
+  ]
+  const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0)
+  const [animatedPlaceholder, setAnimatedPlaceholder] = useState(searchPlaceholders[0])
+
   // Category icon mapping
   const getCategoryIcon = (slug: string) => {
     const iconMap: { [key: string]: any } = {
@@ -109,6 +134,19 @@ export default function Header() {
     const debounceTimer = setTimeout(fetchSuggestions, 300)
     return () => clearTimeout(debounceTimer)
   }, [searchQuery])
+
+  // Animate search placeholder
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentPlaceholderIndex((prevIndex) => (prevIndex + 1) % searchPlaceholders.length)
+    }, 1000) // Change every 1 second
+
+    return () => clearInterval(interval)
+  }, [])
+
+  useEffect(() => {
+    setAnimatedPlaceholder(searchPlaceholders[currentPlaceholderIndex])
+  }, [currentPlaceholderIndex])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -238,7 +276,7 @@ export default function Header() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => searchQuery.trim() && suggestions.length > 0 && setShowSuggestions(true)}
-                placeholder='Search "milk"'
+                placeholder={animatedPlaceholder}
                 className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white shadow-sm text-gray-900"
                 autoComplete="off"
               />
@@ -322,7 +360,7 @@ export default function Header() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => searchQuery.trim() && suggestions.length > 0 && setShowSuggestions(true)}
-                placeholder='Search "milk"'
+                placeholder={animatedPlaceholder}
                 className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white shadow-sm text-gray-900"
                 autoComplete="off"
               />
