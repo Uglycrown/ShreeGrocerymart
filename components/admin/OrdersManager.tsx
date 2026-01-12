@@ -4,16 +4,20 @@ import { useState, useEffect } from 'react'
 import { Package, Clock, CheckCircle, XCircle, Truck, Eye, FileText } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 
+interface DeliveryAddress {
+  addressType: string;
+  flat: string;
+  floor: string;
+  area: string;
+  landmark: string;
+}
+
 interface Order {
   id: string
   orderNumber: string
   customerName: string
   customerPhone: string
-  deliveryAddress: {
-    address: string
-    city: string
-    pincode: string
-  }
+  deliveryAddress: DeliveryAddress | string;
   items: Array<{
     name: string
     quantity: number
@@ -34,25 +38,45 @@ export default function OrdersManager({ onUpdate }: OrdersManagerProps) {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [selectedOrderAddress, setSelectedOrderAddress] = useState<DeliveryAddress | null>(null)
+  const [notification, setNotification] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
-  useEffect(() => {
-    fetchOrders()
-  }, [statusFilter])
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
-      setLoading(true)
       const url = statusFilter === 'all' ? '/api/orders' : `/api/orders?status=${statusFilter}`
       const response = await fetch(url)
       const data = await response.json()
+      if (data.length > orders.length) {
+        setNotification(`New order received: ${data[0].orderNumber}`)
+        setTimeout(() => setNotification(null), 5000)
+      }
       setOrders(data)
     } catch (error) {
       console.error('Error fetching orders:', error)
     } finally {
-      setLoading(false)
+      if (loading) setLoading(false)
     }
-  }
+  }, [statusFilter, orders, loading])
+
+  useEffect(() => {
+    fetchOrders()
+    const interval = setInterval(() => {
+      fetchOrders()
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [fetchOrders])
+
+  useEffect(() => {
+    if (selectedOrder) {
+      if (typeof selectedOrder.deliveryAddress === 'string') {
+        const parsedAddress = JSON.parse(selectedOrder.deliveryAddress);
+        setSelectedOrderAddress(parsedAddress);
+      } else {
+        setSelectedOrderAddress(selectedOrder.deliveryAddress);
+      }
+    }
+  }, [selectedOrder]);
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {

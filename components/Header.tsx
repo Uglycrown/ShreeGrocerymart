@@ -1,26 +1,13 @@
 'use client'
 
-import { ShoppingCart, MapPin, Search, User, Milk, Soup, Wheat, Droplet, Flame, Apple, Cookie, Coffee, Heart } from 'lucide-react'
+import { ShoppingCart, MapPin, Search, User, Milk, Soup, Wheat, Droplet, Flame, Apple, Cookie, Coffee, Heart, Package, Bell, Settings, LogOut, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { useCartStore } from '@/lib/store'
 import { useWishlistStore } from '@/lib/wishlist-store'
 import { formatPrice } from '@/lib/utils'
 import { useEffect, useState, useRef } from 'react'
-
-interface Product {
-  id: string
-  name: string
-  images: string[]
-  price: number
-  unit: string
-}
-
-interface Category {
-  id: string
-  name: string
-  slug: string
-}
+import { useSession, signOut } from 'next-auth/react'
 
 export default function Header() {
   const router = useRouter()
@@ -30,12 +17,15 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState('')
   const [suggestions, setSuggestions] = useState<Product[]>([])
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [showAccountMenu, setShowAccountMenu] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
   const [user, setUser] = useState<any>(null)
   const searchRef = useRef<HTMLDivElement>(null)
+  const accountRef = useRef<HTMLDivElement>(null)
   const itemCount = getItemsCount()
   const total = getTotal()
   const { items: wishlistItems } = useWishlistStore()
+  const { data: session, status } = useSession()
 
   const searchPlaceholders = [
     'Search "milk"',
@@ -62,54 +52,53 @@ export default function Header() {
   const [isDeleting, setIsDeleting] = useState(false)
 
   // Category icon mapping
-  const getCategoryIcon = (slug: string) => {
-    const iconMap: { [key: string]: any } = {
-      'dairy-eggs': Milk,
-      'dals-pulses': Soup,
-      'atta-rice-dal': Wheat,
-      'oils-ghee': Droplet,
-      'masala-spices': Flame,
-      'fruits-vegetables': Apple,
-      'snacks-namkeen': Cookie,
-      'beverages': Coffee,
-    }
-    return iconMap[slug] || Apple
-  }
 
   useEffect(() => {
     setMounted(true)
     
-    // Check if user is logged in
+    // Check if user is logged in (Local Storage or Session)
     const storedUser = localStorage.getItem('user')
     if (storedUser) {
       setUser(JSON.parse(storedUser))
+    } else if (status === 'authenticated' && session?.user) {
+      setUser(session.user)
+    } else if (status === 'unauthenticated') {
+      setUser(null)
     }
-    
-    // Fetch categories
-    const fetchCategories = async () => {
-      try {
-        const response = await fetch('/api/categories')
-        const data = await response.json()
-        setCategories(data.slice(0, 10)) // Limit to 10 categories for navbar
-      } catch (error) {
-        console.error('Error fetching categories:', error)
-      }
-    }
-    
-    fetchCategories()
-  }, [])
 
-  // Close suggestions when clicking outside
-  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowSuggestions(false)
+      }
+      if (accountRef.current && !accountRef.current.contains(event.target as Node)) {
+        setShowAccountMenu(false)
       }
     }
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+  }, [session, status])
+
+  const handleLogout = async () => {
+    if (confirm('Are you sure you want to logout?')) {
+      localStorage.removeItem('userPhone')
+      localStorage.removeItem('user')
+      await signOut({ redirect: false })
+      setUser(null)
+      setShowAccountMenu(false)
+      router.push('/login')
+    }
+  }
+
+  const menuItems = [
+    { icon: Package, label: 'My Orders', href: '/orders', color: 'text-blue-600', bg: 'bg-blue-50' },
+    { icon: Heart, label: 'My Wishlist', href: '/wishlist', color: 'text-red-600', bg: 'bg-red-50' },
+    { icon: MapPin, label: 'Addresses', href: '/addresses', color: 'text-green-600', bg: 'bg-green-50' },
+    { icon: Bell, label: 'Notifications', href: '/notifications', color: 'text-purple-600', bg: 'bg-purple-50' },
+    { icon: Settings, label: 'Settings', href: '/settings', color: 'text-gray-600', bg: 'bg-gray-50' },
+  ]
+
+  // ... (keep search logic and placeholders)
 
   // Fetch suggestions as user types
   useEffect(() => {
@@ -134,6 +123,7 @@ export default function Header() {
     return () => clearTimeout(debounceTimer)
   }, [searchQuery])
 
+  // Typing effect for search placeholder
   useEffect(() => {
     const currentPlaceholder = searchPlaceholders[placeholderIndex]
     const typingSpeed = 150
@@ -319,17 +309,63 @@ export default function Header() {
 
           {/* User Actions */}
           <div className="hidden md:flex items-center gap-6">
-            {user ? (
-              <div className="flex items-center gap-2 text-gray-800">
-                <User className="w-5 h-5" />
-                <span>{user.phoneNumber}</span>
-              </div>
-            ) : (
-              <Link href="/login" className="flex items-center gap-2 text-gray-800 hover:text-gray-900">
-                <User className="w-5 h-5" />
-                <span>Login</span>
-              </Link>
-            )}
+            <div className="relative" ref={accountRef}>
+              {user ? (
+                <div 
+                  className="flex items-center gap-2 text-gray-800 cursor-pointer hover:text-green-600 transition-colors py-2"
+                  onMouseEnter={() => setShowAccountMenu(true)}
+                  onClick={() => setShowAccountMenu(!showAccountMenu)}
+                >
+                  <User className="w-5 h-5" />
+                  <span className="max-w-[120px] truncate">{user.name || user.email || user.phoneNumber}</span>
+                  <ChevronRight className={`w-4 h-4 transition-transform ${showAccountMenu ? 'rotate-90' : ''}`} />
+                </div>
+              ) : (
+                <Link href="/login" className="flex items-center gap-2 text-gray-800 hover:text-green-600 transition-colors">
+                  <User className="w-5 h-5" />
+                  <span>Login</span>
+                </Link>
+              )}
+
+              {/* Account Dropdown Menu */}
+              {user && showAccountMenu && (
+                <div 
+                  className="absolute top-full right-0 mt-1 w-64 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-[60] animate-in fade-in slide-in-from-top-2 duration-200"
+                  onMouseLeave={() => setShowAccountMenu(false)}
+                >
+                  <div className="px-4 py-3 border-b border-gray-50 mb-1">
+                    <p className="text-sm font-bold text-gray-900 truncate">{user.name || 'User'}</p>
+                    <p className="text-xs text-gray-500 truncate">{user.email || user.phoneNumber}</p>
+                  </div>
+
+                  {menuItems.map((item) => (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      onClick={() => setShowAccountMenu(false)}
+                      className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors group"
+                    >
+                      <div className={`${item.bg} p-1.5 rounded-md group-hover:bg-white transition-colors`}>
+                        <item.icon className={`w-4 h-4 ${item.color}`} />
+                      </div>
+                      <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">{item.label}</span>
+                    </Link>
+                  ))}
+
+                  <div className="mt-1 pt-1 border-t border-gray-50">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 text-red-600 transition-colors group"
+                    >
+                      <div className="bg-red-50 p-1.5 rounded-md group-hover:bg-white transition-colors">
+                        <LogOut className="w-4 h-4 text-red-600" />
+                      </div>
+                      <span className="text-sm font-semibold">Logout</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
             
             <Link href="/wishlist" className="relative text-gray-800 hover:text-gray-900 transition">
               <Heart className="w-6 h-6" />

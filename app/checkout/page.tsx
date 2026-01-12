@@ -1,18 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCartStore } from '@/lib/store'
 import { formatPrice } from '@/lib/utils'
-import { ArrowLeft, MapPin, Clock, ShoppingBag } from 'lucide-react'
+import { ArrowLeft, MapPin, Clock, ShoppingBag, Loader2, User } from 'lucide-react'
+import { useSession } from 'next-auth/react'
 
 export default function CheckoutPage() {
   const router = useRouter()
+  const { data: session, status } = useSession()
   const { items, getTotal, getItemsCount, clearCart } = useCartStore()
   const [isProcessing, setIsProcessing] = useState(false)
+  const [mounted, setMounted] = useState(false)
   
+  // New States for Address Management
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([])
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null)
+  const [isAddingNew, setIsAddingNew] = useState(true)
+
   const itemsTotal = getTotal()
   const deliveryCharge = 25
   const handlingCharge = 2
@@ -24,10 +32,83 @@ export default function CheckoutPage() {
     phone: '',
     email: '',
     address: '',
-    city: '',
+    landmark: '',
+    city: 'New Delhi', 
     pincode: '',
     instructions: '',
   })
+
+  useEffect(() => {
+    setMounted(true)
+    
+    const storedUser = localStorage.getItem('user')
+    const userPhone = localStorage.getItem('userPhone')
+
+    if (status === 'unauthenticated' && !storedUser) {
+      router.push('/login?callbackUrl=/checkout')
+      return
+    }
+
+    let userId = ''
+    if (status === 'authenticated' && session?.user) {
+      userId = (session.user as any).id
+      setFormData(prev => ({
+        ...prev,
+        name: session.user?.name || prev.name,
+        email: session.user?.email || prev.email,
+      }))
+    } else if (storedUser) {
+      const user = JSON.parse(storedUser)
+      userId = user.id
+      setFormData(prev => ({
+        ...prev,
+        name: user.name || prev.name,
+        email: user.email || prev.email,
+        phone: userPhone || user.phone || prev.phone,
+      }))
+    }
+
+    if (userId) {
+      fetchSavedAddresses(userId)
+    }
+  }, [status, session, router])
+
+  const fetchSavedAddresses = async (userId: string) => {
+    try {
+      const res = await fetch(`/api/addresses?userId=${userId}`)
+      if (res.ok) {
+        const data = await res.json()
+        setSavedAddresses(data)
+        if (data.length > 0) {
+          setIsAddingNew(false)
+          setSelectedAddressId(data[0].id)
+          // Pre-fill form with default address
+          const def = data.find((a: any) => a.isDefault) || data[0]
+          setFormData(prev => ({
+            ...prev,
+            address: def.street,
+            landmark: def.landmark || '',
+            city: def.city,
+            pincode: def.pincode
+          }))
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching addresses:', err)
+    }
+  }
+
+  const handleSelectAddress = (addr: any) => {
+    setSelectedAddressId(addr.id)
+    setIsAddingNew(false)
+    setFormData(prev => ({
+      ...prev,
+      address: addr.street,
+      landmark: addr.landmark || '',
+      city: addr.city,
+      pincode: addr.pincode
+    }))
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
@@ -37,34 +118,57 @@ export default function CheckoutPage() {
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    if (e) e.preventDefault()
     setIsProcessing(true)
 
     try {
-      // Get user from localStorage
-      const userStr = localStorage.getItem('user')
-      if (!userStr) {
+      let userId = ''
+      if (session?.user) {
+        userId = (session.user as any).id
+      } else {
+        const userStr = localStorage.getItem('user')
+        if (userStr) {
+          userId = JSON.parse(userStr).id
+        }
+      }
+
+      if (!userId) {
         alert('Please login to place an order')
         router.push('/login')
         return
       }
 
-      const user = JSON.parse(userStr)
+      // Auto-save address if it's new
+      if (isAddingNew) {
+        await fetch('/api/addresses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            street: formData.address,
+            landmark: formData.landmark,
+            city: formData.city,
+            pincode: formData.pincode,
+            isDefault: savedAddresses.length === 0
+          })
+        })
+      }
 
       // Prepare order data
       const orderData = {
-        userId: user.id,
+        userId: userId,
         customerName: formData.name,
         customerPhone: formData.phone,
         customerEmail: formData.email,
         deliveryAddress: {
           address: formData.address,
+          landmark: formData.landmark,
           city: formData.city,
           pincode: formData.pincode,
         },
         instructions: formData.instructions,
         items: items.map(item => ({
-          productId: item.id,
+          productId: item.productId,
           name: item.name,
           price: item.price,
           quantity: item.quantity,
@@ -88,7 +192,6 @@ export default function CheckoutPage() {
       })
 
       const result = await response.json()
-      console.log('Order API response:', result)
 
       if (response.ok) {
         alert('Order placed successfully! Order ID: ' + result.orderNumber)
@@ -96,16 +199,22 @@ export default function CheckoutPage() {
         router.push('/orders/' + result.orderId)
       } else {
         const errorMsg = result.error || result.message || 'Unknown error'
-        const errorDetails = result.details ? '\n\nDetails: ' + result.details : ''
-        console.error('Order failed:', result)
-        alert('Failed to place order: ' + errorMsg + errorDetails)
+        alert('Failed to place order: ' + errorMsg)
       }
     } catch (error: any) {
       console.error('Error placing order:', error)
-      alert('Error placing order: ' + error.message + '\nPlease try again.')
+      alert('Error placing order: ' + error.message)
     } finally {
       setIsProcessing(false)
     }
+  }
+
+  if (!mounted || status === 'loading') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="w-10 h-10 text-green-600 animate-spin" />
+      </div>
+    )
   }
 
   if (items.length === 0) {
@@ -130,246 +239,236 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center gap-4 mb-8">
-          <Link href="/cart" className="text-gray-600 hover:text-gray-900">
-            <ArrowLeft className="w-6 h-6" />
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Checkout</h1>
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <MapPin className="w-5 h-5 text-green-600" />
-                  <h2 className="text-xl font-semibold text-gray-900">Delivery Address</h2>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Full Name *
-                      </label>
-                      <input
-                        type="text"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        required
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                        placeholder="John Doe"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Phone Number *
-                      </label>
-                      <input
-                        type="tel"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        required
-                        pattern="[0-9]{10}"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                        placeholder="9876543210"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                      placeholder="john@example.com"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Complete Address *
-                    </label>
-                    <textarea
-                      name="address"
-                      value={formData.address}
-                      onChange={handleChange}
-                      required
-                      rows={3}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                      placeholder="House No., Building Name, Street, Locality"
-                    />
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        City *
-                      </label>
-                      <input
-                        type="text"
-                        name="city"
-                        value={formData.city}
-                        onChange={handleChange}
-                        required
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                        placeholder="New Delhi"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Pincode *
-                      </label>
-                      <input
-                        type="text"
-                        name="pincode"
-                        value={formData.pincode}
-                        onChange={handleChange}
-                        required
-                        pattern="[0-9]{6}"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                        placeholder="110037"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Delivery Instructions (Optional)
-                    </label>
-                    <textarea
-                      name="instructions"
-                      value={formData.instructions}
-                      onChange={handleChange}
-                      rows={2}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                      placeholder="Any special instructions for delivery"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-semibold mb-4 text-gray-900">Payment Method</h2>
-                <div className="space-y-3">
-                  <label className="flex items-center gap-3 p-4 border-2 border-green-600 rounded-lg cursor-pointer bg-green-50">
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="cod"
-                      defaultChecked
-                      className="w-5 h-5 text-green-600"
-                    />
-                    <div>
-                      <div className="font-semibold text-gray-900">Cash on Delivery</div>
-                      <div className="text-sm text-gray-600">Pay when you receive</div>
-                    </div>
-                  </label>
-                  <label className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-lg cursor-not-allowed opacity-50">
-                    <input
-                      type="radio"
-                      name="payment"
-                      value="online"
-                      disabled
-                      className="w-5 h-5"
-                    />
-                    <div>
-                      <div className="font-semibold text-gray-900">Online Payment</div>
-                      <div className="text-sm text-gray-600">Coming soon</div>
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isProcessing}
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-4 rounded-lg transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                {isProcessing ? 'Processing...' : `Place Order`}
-              </button>
-            </form>
+    <>
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center gap-4 mb-8">
+            <Link href="/cart" className="text-gray-600 hover:text-gray-900">
+              <ArrowLeft className="w-6 h-6" />
+            </Link>
+            <h1 className="text-3xl font-bold text-gray-900">Checkout</h1>
           </div>
 
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-md p-6 sticky top-24">
-              <h2 className="text-xl font-semibold mb-4 text-gray-900">Order Summary</h2>
-              
-              <div className="bg-green-50 rounded-lg p-3 mb-4 flex items-center gap-2">
-                <Clock className="w-5 h-5 text-green-600" />
-                <div>
-                  <div className="font-semibold text-green-700">Delivery in 24 minutes</div>
-                  <div className="text-xs text-gray-600">{getItemsCount()} items</div>
+          <div className="grid lg:grid-cols-3 gap-8 pb-24 lg:pb-8">
+            <div className="lg:col-span-2">
+              <form id="checkout-form" onSubmit={handleSubmit} className="space-y-6">
+                {/* Contact Details */}
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <User className="w-5 h-5 text-green-600" />
+                    <h2 className="text-xl font-semibold text-gray-900">Contact Details</h2>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                        <input type="text" name="name" value={formData.name} onChange={handleChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="John Doe" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
+                        <input type="tel" name="phone" value={formData.phone} onChange={handleChange} required pattern="[0-9]{10}" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="9876543210" />
+                      </div>
+                  </div>
                 </div>
-              </div>
 
-              <div className="space-y-3 mb-4 max-h-60 overflow-y-auto">
-                {items.map((item) => (
-                  <div key={item.id} className="flex gap-3">
-                    <div className="relative w-16 h-16 flex-shrink-0 bg-gray-50 rounded">
-                      <Image
-                        src={item.image || '/placeholder.png'}
-                        alt={item.name}
-                        fill
-                        className="object-cover rounded"
-                      />
+                {/* Delivery Address */}
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-5 h-5 text-green-600" />
+                      <h2 className="text-xl font-semibold text-gray-900">Delivery Address</h2>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-semibold truncate text-gray-900">{item.name}</h3>
-                      <p className="text-xs text-gray-600">{item.unit}</p>
-                      <div className="flex justify-between items-center mt-1">
-                        <span className="text-xs text-gray-600">Qty: {item.quantity}</span>
-                        <span className="text-sm font-semibold text-gray-900">{formatPrice(item.price * item.quantity)}</span>
+                    {savedAddresses.length > 0 && (
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          setIsAddingNew(!isAddingNew);
+                          if (!isAddingNew) setSelectedAddressId(null);
+                        }}
+                        className="text-green-600 text-sm font-bold hover:text-green-700"
+                      >
+                        {isAddingNew ? 'Select Saved' : '+ Add New'}
+                      </button>
+                    )}
+                  </div>
+
+                  {!isAddingNew && selectedAddressId ? (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-bold text-gray-900">{formData.address.split(',')[0]}</p>
+                          <p className="text-sm text-gray-600 truncate max-w-md">
+                            {formData.landmark ? `${formData.landmark}, ` : ''}{formData.address}, {formData.pincode}
+                          </p>
+                        </div>
+                        <button 
+                          type="button" 
+                          onClick={() => setIsAddingNew(true)}
+                          className="bg-white text-green-600 border border-green-600 px-3 py-1 rounded text-xs font-bold hover:bg-green-50 transition"
+                        >
+                          CHANGE
+                        </button>
                       </div>
                     </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {savedAddresses.length > 0 && !isAddingNew && (
+                        <div className="grid gap-3 mb-4">
+                          {savedAddresses.map((addr) => (
+                            <div 
+                              key={addr.id}
+                              onClick={() => handleSelectAddress(addr)}
+                              className={`p-3 border-2 rounded-lg cursor-pointer transition ${selectedAddressId === addr.id ? 'border-green-600 bg-green-50' : 'border-gray-100 hover:border-gray-200'}`}
+                            >
+                              <p className="text-sm font-bold text-gray-900">{addr.label}</p>
+                              <p className="text-xs text-gray-600">{addr.street}, {addr.landmark}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Complete Address *</label>
+                        <textarea name="address" value={formData.address} onChange={handleChange} required rows={2} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="House No., Building Name, Street" />
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Landmark *</label>
+                          <input type="text" name="landmark" value={formData.landmark} onChange={handleChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="e.g. Near Apollo Hospital" />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Pincode *</label>
+                          <input type="text" name="pincode" value={formData.pincode} onChange={handleChange} required pattern="[0-9]{6}" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="110037" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Instructions */}
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Delivery Instructions (Optional)</label>
+                  <textarea name="instructions" value={formData.instructions} onChange={handleChange} rows={2} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="e.g. Don't ring the bell" />
+                </div>
+
+                {/* Payment */}
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h2 className="text-xl font-semibold mb-4 text-gray-900">Payment Method</h2>
+                  <div className="space-y-3">
+                    <label className="flex items-center gap-3 p-4 border-2 border-green-600 rounded-lg cursor-pointer bg-green-50">
+                      <input type="radio" name="payment" value="cod" defaultChecked className="w-5 h-5 text-green-600" />
+                      <div>
+                        <div className="font-semibold text-gray-900">Cash on Delivery</div>
+                        <div className="text-sm text-gray-600">Pay when you receive</div>
+                      </div>
+                    </label>
                   </div>
-                ))}
-              </div>
+                </div>
+              </form>
+            </div>
 
-              <div className="border-t pt-4 space-y-2 mb-4">
-                <div className="flex justify-between text-sm text-gray-900">
-                  <span>Items total</span>
-                  <span className="font-semibold">{formatPrice(itemsTotal)}</span>
-                </div>
-                <div className="flex justify-between text-sm text-gray-900">
-                  <span>Delivery charge</span>
-                  <span className="font-semibold">{formatPrice(deliveryCharge)}</span>
-                </div>
-                <div className="flex justify-between text-sm text-gray-900">
-                  <span>Handling charge</span>
-                  <span className="font-semibold">{formatPrice(handlingCharge)}</span>
-                </div>
-                {smallCartCharge > 0 && (
-                  <div className="flex justify-between text-sm text-orange-600">
-                    <span>Small cart charge</span>
-                    <span className="font-semibold">{formatPrice(smallCartCharge)}</span>
+            {/* Sidebar */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-lg shadow-md p-6 sticky top-24">
+                <h2 className="text-xl font-semibold mb-4 text-gray-900">Order Summary</h2>
+                
+                <div className="bg-green-50 rounded-lg p-3 mb-4 flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-green-700" />
+                  <div>
+                    <div className="font-semibold text-green-700">Delivery in 24 minutes</div>
+                    <div className="text-xs text-gray-600">{getItemsCount()} items</div>
                   </div>
-                )}
-              </div>
-
-              <div className="border-t pt-4">
-                <div className="flex justify-between text-xl font-bold">
-                  <span className="text-gray-900">Total</span>
-                  <span className="text-green-600">{formatPrice(grandTotal)}</span>
                 </div>
-              </div>
 
-              <p className="text-xs text-gray-600 text-center mt-4">
-                By placing this order, you agree to our terms and conditions
-              </p>
+                <div className="space-y-3 mb-4 max-h-60 overflow-y-auto">
+                  {items.map((item) => (
+                    <div key={item.id} className="flex gap-3">
+                      <div className="relative w-16 h-16 flex-shrink-0 bg-gray-50 rounded">
+                        <Image src={item.image || '/placeholder.png'} alt={item.name} fill className="object-cover rounded" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-semibold truncate text-gray-900">{item.name}</h3>
+                        <p className="text-xs text-gray-600">{item.unit}</p>
+                        <div className="flex justify-between items-center mt-1">
+                          <span className="text-xs text-gray-600">Qty: {item.quantity}</span>
+                          <span className="text-sm font-semibold text-gray-900">{formatPrice(item.price * item.quantity)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="border-t pt-4 space-y-2 mb-4">
+                  <div className="flex justify-between text-sm text-gray-900">
+                    <span>Items total</span>
+                    <span className="font-semibold">{formatPrice(itemsTotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-900">
+                    <span>Delivery charge</span>
+                    <span className="font-semibold">{formatPrice(deliveryCharge)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-900">
+                    <span>Handling charge</span>
+                    <span className="font-semibold">{formatPrice(handlingCharge)}</span>
+                  </div>
+                  {smallCartCharge > 0 && (
+                    <div className="flex justify-between text-sm text-orange-600">
+                      <span>Small cart charge</span>
+                      <span className="font-semibold">{formatPrice(smallCartCharge)}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="border-t pt-4 mb-6">
+                  <div className="flex justify-between text-xl font-bold">
+                    <span className="text-gray-900">Total</span>
+                    <span className="text-green-600">{formatPrice(grandTotal)}</span>
+                  </div>
+                </div>
+
+                {/* Desktop Place Order Button */}
+                <button
+                  type="submit"
+                  form="checkout-form"
+                  disabled={isProcessing}
+                  className="hidden lg:block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-4 rounded-lg transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed text-lg shadow-lg"
+                >
+                  {isProcessing ? 'Processing...' : `Place Order`}
+                </button>
+
+                <p className="text-xs text-gray-600 text-center mt-4">
+                  By placing this order, you agree to our terms and conditions
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Sticky Mobile Place Order Bar */}
+      <div className="lg:hidden fixed bottom-16 left-0 right-0 bg-white border-t border-gray-200 p-4 z-40 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+        <div className="container mx-auto flex items-center justify-between gap-4">
+          <div className="flex flex-col">
+            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Total Amount</span>
+            <span className="text-xl font-bold text-gray-900">{formatPrice(grandTotal)}</span>
+          </div>
+          <button
+            type="submit"
+            form="checkout-form"
+            disabled={isProcessing}
+            className="flex-1 max-w-[200px] bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 disabled:bg-gray-400 disabled:cursor-not-allowed shadow-md flex items-center justify-center gap-2"
+          >
+            {isProcessing ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <>
+                Place Order
+                <ArrowLeft className="w-4 h-4 rotate-180" />
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </>
   )
 }

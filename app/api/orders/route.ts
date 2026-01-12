@@ -6,13 +6,40 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const userId = searchParams.get('userId')
+    const email = searchParams.get('email')
+    const phoneNumber = searchParams.get('phoneNumber')
     const status = searchParams.get('status')
+    
     const db = await getDb()
     const filter: any = {}
-    if (userId) filter.userId = new ObjectId(userId)
+    
+    // Support multiple ways to find orders
+    const orFilters = []
+    
+    if (userId && ObjectId.isValid(userId)) {
+      orFilters.push({ userId: new ObjectId(userId) })
+    }
+    
+    if (email) {
+      orFilters.push({ customerEmail: email })
+    }
+    
+    if (phoneNumber) {
+      orFilters.push({ customerPhone: phoneNumber })
+    }
+    
+    if (orFilters.length > 0) {
+      filter.$or = orFilters
+    }
+    
     if (status) filter.status = status
+    
+    console.log('Fetching orders with filter:', JSON.stringify(filter))
+    
     const orders = await db.collection('Order').find(filter).sort({ createdAt: -1 }).toArray()
+    
     const ordersWithDetails = orders.map(order => ({
+      _id: order._id.toString(), // Use _id to match frontend expectation
       id: order._id.toString(),
       orderNumber: order.orderNumber,
       userId: order.userId?.toString(),
@@ -27,12 +54,14 @@ export async function GET(request: NextRequest) {
       handlingCharge: order.handlingCharge,
       smallCartCharge: order.smallCartCharge,
       total: order.total,
+      totalAmount: order.total, // Map total to totalAmount for frontend compatibility
       paymentMethod: order.paymentMethod,
       paymentStatus: order.paymentStatus,
       status: order.status,
       createdAt: order.createdAt,
       updatedAt: order.updatedAt,
     }))
+    
     return NextResponse.json(ordersWithDetails)
   } catch (error) {
     console.error('Error fetching orders:', error)

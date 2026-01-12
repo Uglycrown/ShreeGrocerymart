@@ -5,6 +5,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useCartStore } from '@/lib/store'
 import { formatPrice } from '@/lib/utils'
+import { useSession } from 'next-auth/react'
+import { useEffect, useState } from 'react'
 
 interface CartSidebarProps {
   isOpen: boolean
@@ -13,6 +15,17 @@ interface CartSidebarProps {
 
 export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
   const { items, updateQuantity, removeItem, getTotal, getItemsCount } = useCartStore()
+  const { data: session, status } = useSession()
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  useEffect(() => {
+    // Check both session and localStorage
+    if (status === 'authenticated' || localStorage.getItem('user')) {
+      setIsLoggedIn(true)
+    } else {
+      setIsLoggedIn(false)
+    }
+  }, [status, isOpen]) // Check when sidebar opens too
   
   const itemsTotal = getTotal()
   const deliveryCharge = 25
@@ -145,10 +158,11 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
               </p>
 
               <Link
-                href="/checkout"
+                href={isLoggedIn ? "/checkout" : "/login"}
+                onClick={onClose}
                 className="block w-full bg-green-600 hover:bg-green-700 text-white text-center font-semibold py-3 rounded-lg transition-colors"
               >
-                {formatPrice(grandTotal)} | Login to Proceed →
+                {formatPrice(grandTotal)} | {isLoggedIn ? 'Proceed to Pay' : 'Login to Proceed'} →
               </Link>
             </div>
           </>

@@ -6,6 +6,8 @@ import BottomNav from "@/components/BottomNav";
 import Footer from "@/components/Footer";
 import BackgroundPattern from "@/components/BackgroundPattern";
 
+import Providers from "@/components/Providers";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -31,15 +33,17 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased relative`}
       >
-        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-          <BackgroundPattern />
-        </div>
-        <div className="relative z-10">
-          <Header />
-          {children}
-          <Footer />
-          <BottomNav />
-        </div>
+        <Providers>
+          <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+            <BackgroundPattern />
+          </div>
+          <div className="relative z-10">
+            <Header />
+            {children}
+            <Footer />
+            <BottomNav />
+          </div>
+        </Providers>
       </body>
     </html>
   );

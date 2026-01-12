@@ -2,24 +2,65 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { User, MapPin, Phone, Mail, Settings, LogOut, ChevronRight, Heart, Package, ShoppingBag, Bell } from 'lucide-react'
+import { User, MapPin, Phone, Mail, Settings, LogOut, ChevronRight, Heart, Package, ShoppingBag, Bell, Loader2, RefreshCw } from 'lucide-react'
+import { useSession, signOut } from 'next-auth/react'
+import { formatPrice } from '@/lib/utils'
 
 export default function AccountPage() {
-  const router = useRouter()
-  const [user, setUser] = useState<any>(null)
-  const [mounted, setMounted] = useState(false)
+// ... keep state and effects ...
+
 
   useEffect(() => {
     setMounted(true)
     const phoneNumber = localStorage.getItem('userPhone')
+    const storedUser = localStorage.getItem('user')
+    
     if (phoneNumber) {
       setUser({ phoneNumber })
+    } else if (status === 'authenticated' && session?.user) {
+        setUser(session.user)
     }
-  }, [])
 
-  const handleLogout = () => {
+    // Fetch Stats
+    const fetchStats = async () => {
+      const queryParams = new URLSearchParams()
+      if (session?.user) {
+        if ((session.user as any).id) queryParams.append('userId', (session.user as any).id)
+        if (session.user.email) queryParams.append('email', session.user.email)
+      }
+      if (phoneNumber) queryParams.append('phoneNumber', phoneNumber)
+      if (storedUser) {
+        const u = JSON.parse(storedUser)
+        if (u.id) queryParams.append('userId', u.id)
+      }
+
+      if (queryParams.toString() === '') return
+
+      try {
+        const res = await fetch(`/api/orders?${queryParams.toString()}`)
+        if (res.ok) {
+          const orders = await res.json()
+          const totalSpent = orders.reduce((acc: number, order: any) => acc + (order.total || 0), 0)
+          setStats({
+            orders: orders.length,
+            spent: totalSpent
+          })
+        }
+      } catch (err) {
+        console.error('Error fetching stats:', err)
+      }
+    }
+
+    if (status !== 'loading') {
+      fetchStats()
+    }
+  }, [session, status])
+
+  const handleLogout = async () => {
     if (confirm('Are you sure you want to logout?')) {
       localStorage.removeItem('userPhone')
+      localStorage.removeItem('user')
+      await signOut({ redirect: false })
       router.push('/login')
     }
   }
@@ -32,7 +73,13 @@ export default function AccountPage() {
     { icon: Settings, label: 'Settings', description: 'Account preferences', href: '/settings', color: 'text-gray-600', bg: 'bg-gray-50' },
   ]
 
-  if (!mounted) return null
+  if (!mounted || status === 'loading') {
+    return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 text-green-600 animate-spin" />
+        </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -41,7 +88,7 @@ export default function AccountPage() {
           <div className="flex items-center gap-4">
             <div className="bg-white/20 backdrop-blur-sm rounded-full p-4"><User className="w-12 h-12" /></div>
             <div>
-              <h1 className="text-2xl font-bold mb-1">{user ? `Hi, ${user.phoneNumber}` : 'My Account'}</h1>
+              <h1 className="text-2xl font-bold mb-1">{user ? `Hi, ${user.name || user.email || user.phoneNumber}` : 'My Account'}</h1>
               <p className="text-green-50">Welcome to Shree Grocery Mart</p>
             </div>
           </div>
@@ -59,17 +106,29 @@ export default function AccountPage() {
         ) : (
           <>
             <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 mb-6">
-              <div className="bg-white rounded-lg shadow-md p-2 sm:p-3 md:p-4 text-center">
+              <div 
+                className="bg-white rounded-lg shadow-md p-2 sm:p-3 md:p-4 text-center cursor-pointer hover:bg-gray-50 transition"
+                onClick={() => router.push('/orders')}
+              >
                 <Package className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-green-600 mx-auto mb-1 sm:mb-2" />
-                <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">0</div><div className="text-[10px] sm:text-xs text-gray-600">Orders</div>
+                <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">{stats.orders}</div>
+                <div className="text-[10px] sm:text-xs text-gray-600">Orders</div>
               </div>
-              <div className="bg-white rounded-lg shadow-md p-2 sm:p-3 md:p-4 text-center">
+              <div 
+                className="bg-white rounded-lg shadow-md p-2 sm:p-3 md:p-4 text-center cursor-pointer hover:bg-gray-50 transition"
+                onClick={() => router.push('/wishlist')}
+              >
                 <Heart className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-red-600 mx-auto mb-1 sm:mb-2" />
-                <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">0</div><div className="text-[10px] sm:text-xs text-gray-600">Wishlist</div>
+                <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">0</div>
+                <div className="text-[10px] sm:text-xs text-gray-600">Wishlist</div>
               </div>
-              <div className="bg-white rounded-lg shadow-md p-2 sm:p-3 md:p-4 text-center">
-                <ShoppingBag className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-gray-900">₹0</div><div className="text-xs text-gray-600">Spent</div>
+              <div 
+                className="bg-white rounded-lg shadow-md p-2 sm:p-3 md:p-4 text-center cursor-pointer hover:bg-gray-50 transition"
+                onClick={() => router.push('/orders')}
+              >
+                <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-blue-600 mx-auto mb-1 sm:mb-2" />
+                <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">View</div>
+                <div className="text-[10px] sm:text-xs text-gray-600">Buy Again</div>
               </div>
             </div>
 

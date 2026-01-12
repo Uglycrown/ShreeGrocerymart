@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Package, Clock, CheckCircle, XCircle, ChevronRight, ArrowLeft } from 'lucide-react'
+import { Package, Clock, CheckCircle, XCircle, ChevronRight, ArrowLeft, Loader2 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
+import { useSession } from 'next-auth/react'
 
 interface Order {
   _id: string
@@ -17,24 +18,37 @@ interface Order {
 
 export default function OrdersPage() {
   const router = useRouter()
+  const { data: session, status } = useSession()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
 
-  useEffect(() => {
-    setMounted(true)
-    fetchOrders()
-  }, [])
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
-      const phoneNumber = localStorage.getItem('userPhone')
-      if (!phoneNumber) {
+      setLoading(true)
+      const userPhone = localStorage.getItem('userPhone')
+      const storedUser = localStorage.getItem('user')
+      let userObj = storedUser ? JSON.parse(storedUser) : null
+
+      const queryParams = new URLSearchParams()
+      
+      // Use Session data (NextAuth)
+      if (session?.user) {
+        if ((session.user as any).id) queryParams.append('userId', (session.user as any).id)
+        if (session.user.email) queryParams.append('email', session.user.email)
+      }
+      
+      // Use Local Storage data (Phone Login)
+      if (userPhone) queryParams.append('phoneNumber', userPhone)
+      if (userObj?.id) queryParams.append('userId', userObj.id)
+
+      if (queryParams.toString() === '') {
+        setOrders([])
         setLoading(false)
         return
       }
 
-      const res = await fetch(`/api/orders?phoneNumber=${phoneNumber}`)
+      const res = await fetch(`/api/orders?${queryParams.toString()}`)
       if (res.ok) {
         const data = await res.json()
         setOrders(data)
@@ -44,7 +58,14 @@ export default function OrdersPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [session])
+
+  useEffect(() => {
+    setMounted(true)
+    if (status !== 'loading') {
+      fetchOrders()
+    }
+  }, [status, fetchOrders])
 
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
