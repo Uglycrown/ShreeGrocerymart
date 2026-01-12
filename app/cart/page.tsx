@@ -4,16 +4,28 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useCartStore } from '@/lib/store'
 import { formatPrice } from '@/lib/utils'
-import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft } from 'lucide-react'
+import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft, ArrowRight, Loader2 } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import { useEffect, useState } from 'react'
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, getTotal, getItemsCount, clearCart } = useCartStore()
+  const { data: session, status } = useSession()
+  const [mounted, setMounted] = useState(false)
   
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const itemsTotal = getTotal()
   const deliveryCharge = 25
   const handlingCharge = 2
   const smallCartCharge = itemsTotal < 100 ? 20 : 0
   const grandTotal = itemsTotal + deliveryCharge + handlingCharge + smallCartCharge
+
+  const isLoggedIn = status === 'authenticated' || (typeof window !== 'undefined' && localStorage.getItem('user'))
+
+  if (!mounted) return null
 
   if (items.length === 0) {
     return (
@@ -37,7 +49,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 py-8 pb-24 lg:pb-8">
       <div className="container mx-auto px-4">
         <div className="flex items-center gap-4 mb-8">
           <Link href="/" className="text-gray-600 hover:text-gray-900">
@@ -160,10 +172,10 @@ export default function CartPage() {
               </div>
 
               <Link
-                href="/checkout"
-                className="block w-full bg-green-600 hover:bg-green-700 text-white text-center font-semibold py-4 rounded-lg transition-colors mb-3"
+                href={isLoggedIn ? "/checkout" : "/login?callbackUrl=/cart"}
+                className="hidden lg:block w-full bg-green-600 hover:bg-green-700 text-white text-center font-semibold py-4 rounded-lg transition-colors mb-3"
               >
-                Proceed to Checkout
+                {isLoggedIn ? 'Proceed to Checkout' : 'Login to Proceed'}
               </Link>
 
               <p className="text-xs text-gray-600 text-center">
@@ -179,6 +191,32 @@ export default function CartPage() {
               )}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Sticky Mobile Proceed Bar */}
+      <div className="lg:hidden fixed bottom-16 left-0 right-0 bg-white border-t border-gray-200 p-4 z-40 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+        <div className="container mx-auto flex items-center justify-between gap-4">
+          <div className="flex flex-col">
+            <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Total Amount</span>
+            <span className="text-xl font-bold text-gray-900">{formatPrice(grandTotal)}</span>
+          </div>
+          <Link
+            href={isLoggedIn ? "/checkout" : "/login?callbackUrl=/cart"}
+            className="flex-1 max-w-[220px] bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 shadow-md flex items-center justify-center gap-2"
+          >
+            {isLoggedIn ? (
+              <>
+                Checkout
+                <ArrowRight className="w-4 h-4" />
+              </>
+            ) : (
+              <>
+                Login
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
+          </Link>
         </div>
       </div>
     </div>

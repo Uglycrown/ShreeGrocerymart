@@ -207,7 +207,7 @@ export default function Home() {
       {/* Floating Cart Button */}
       <button
         onClick={() => setIsCartOpen(true)}
-        className="fixed bottom-6 right-6 bg-green-600 text-white p-4 rounded-full shadow-lg hover:bg-green-700 transition-colors z-30"
+        className="fixed bottom-24 md:bottom-8 right-6 bg-green-600 text-white p-4 rounded-full shadow-lg hover:bg-green-700 transition-colors z-30 shadow-[0_4px_20px_rgba(0,0,0,0.15)]"
       >
         <ShoppingBag className="w-6 h-6" />
       </button>
