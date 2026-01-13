@@ -9,6 +9,14 @@ import { formatPrice } from '@/lib/utils'
 import { useEffect, useState, useRef } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 
+interface Product {
+  id: string;
+  name: string;
+  unit: string;
+  price: number;
+  images: string[];
+}
+
 export default function Header() {
   const router = useRouter()
   const pathname = usePathname()
