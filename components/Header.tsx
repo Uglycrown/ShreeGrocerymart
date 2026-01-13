@@ -1,6 +1,6 @@
 'use client'
 
-import { ShoppingCart, MapPin, Search, User, Milk, Soup, Wheat, Droplet, Flame, Apple, Cookie, Coffee, Heart, Package, Bell, Settings, LogOut, ChevronRight } from 'lucide-react'
+import { ShoppingCart, MapPin, Search, User, Heart, Package, Bell, Settings, LogOut, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { useCartStore } from '@/lib/store'
@@ -51,8 +51,6 @@ export default function Header() {
   const [placeholder, setPlaceholder] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
 
-  // Category icon mapping
-
   useEffect(() => {
     setMounted(true)
     
@@ -65,6 +63,24 @@ export default function Header() {
     } else if (status === 'unauthenticated') {
       setUser(null)
     }
+
+    // Fetch categories
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories')
+        const data = await response.json()
+        if (Array.isArray(data)) {
+          setCategories(data)
+        } else {
+          console.error('Invalid categories data:', data)
+          setCategories([])
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error)
+      }
+    }
+    
+    fetchCategories()
 
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -461,7 +477,6 @@ export default function Header() {
                   </span>
                 </Link>
                 {categories.map((category) => {
-                  const Icon = getCategoryIcon(category.slug)
                   const isActive = pathname === `/category/${category.slug}`
                   return (
                     <Link
@@ -472,9 +487,7 @@ export default function Header() {
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center group-hover:bg-green-600 transition-colors flex-shrink-0 ${
                         isActive ? 'bg-green-600' : 'bg-green-100'
                       }`}>
-                        <Icon className={`w-5 h-5 group-hover:text-white transition-colors ${
-                          isActive ? 'text-white' : 'text-green-600'
-                        }`} />
+                        <img src={category.image} alt={category.name} className="w-10 h-10 rounded-full object-cover" />
                       </div>
                       <span className={`text-[10px] md:text-xs font-medium group-hover:text-green-600 transition-colors text-center leading-tight w-full break-words ${
                         isActive ? 'text-green-600 font-semibold' : 'text-gray-700'

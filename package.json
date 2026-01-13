@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "tsx prisma/seed.ts",
-    "seed:grocery": "tsx prisma/seed-grocery.ts"
+    "seed:grocery": "tsx prisma/seed-grocery.ts",
+    "seed:new": "tsx prisma/seed-new-products.ts",
+    "seed:new-categories": "tsx prisma/seed-new-categories.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

@@ -8,7 +8,7 @@ export async function GET() {
     const db = await getDb()
     const categories = await db.collection('Category')
       .find({})
-      .sort({ priority: 1 })
+      .sort({ order: 1 })
       .toArray()
 
     const categoriesWithCounts = await Promise.all(
