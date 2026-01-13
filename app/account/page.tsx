@@ -8,6 +8,8 @@ import { formatPrice } from '@/lib/utils'
 
 export default function AccountPage() {
   const [mounted, setMounted] = useState(false)
+  const [user, setUser] = useState<any>(null)
+  const [stats, setStats] = useState({ orders: 0, spent: 0 })
 // ... keep state and effects ...
 
 
