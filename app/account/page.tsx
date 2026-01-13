@@ -10,6 +10,7 @@ export default function AccountPage() {
   const [mounted, setMounted] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [stats, setStats] = useState({ orders: 0, spent: 0 })
+  const { data: session, status } = useSession()
 // ... keep state and effects ...
 
 
