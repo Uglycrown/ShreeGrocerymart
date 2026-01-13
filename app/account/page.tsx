@@ -11,6 +11,7 @@ export default function AccountPage() {
   const [user, setUser] = useState<any>(null)
   const [stats, setStats] = useState({ orders: 0, spent: 0 })
   const { data: session, status } = useSession()
+  const router = useRouter()
 // ... keep state and effects ...
 
 
