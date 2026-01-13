@@ -17,6 +17,13 @@ interface Product {
   images: string[];
 }
 
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  image: string;
+}
+
 export default function Header() {
   const router = useRouter()
   const pathname = usePathname()
