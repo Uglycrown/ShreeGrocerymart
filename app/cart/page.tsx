@@ -172,7 +172,7 @@ export default function CartPage() {
               </div>
 
               <Link
-                href={isLoggedIn ? "/checkout" : "/login?callbackUrl=/cart"}
+                href={isLoggedIn ? "/checkout/address" : "/login?callbackUrl=/checkout/address"}
                 className="hidden lg:block w-full bg-green-600 hover:bg-green-700 text-white text-center font-semibold py-4 rounded-lg transition-colors mb-3"
               >
                 {isLoggedIn ? 'Proceed to Checkout' : 'Login to Proceed'}
@@ -202,7 +202,7 @@ export default function CartPage() {
             <span className="text-xl font-bold text-gray-900">{formatPrice(grandTotal)}</span>
           </div>
           <Link
-            href={isLoggedIn ? "/checkout" : "/login?callbackUrl=/cart"}
+            href={isLoggedIn ? "/checkout/address" : "/login?callbackUrl=/checkout/address"}
             className="flex-1 max-w-[220px] bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 shadow-md flex items-center justify-center gap-2"
           >
             {isLoggedIn ? (

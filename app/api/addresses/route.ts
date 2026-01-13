@@ -33,10 +33,18 @@ export async function POST(request: Request) {
 
     // If isDefault is true, unset other defaults
     if (isDefault) {
-      await prisma.address.updateMany({
-        where: { userId },
-        data: { isDefault: false }
+      // Find existing default addresses
+      const defaultAddresses = await prisma.address.findMany({
+        where: { userId, isDefault: true }
       })
+
+      // Update them one by one to avoid transaction requirement of updateMany in some mongo configs
+      for (const addr of defaultAddresses) {
+        await prisma.address.update({
+          where: { id: addr.id },
+          data: { isDefault: false }
+        })
+      }
     }
 
     const address = await prisma.address.create({
@@ -46,6 +54,7 @@ export async function POST(request: Request) {
         street,
         landmark,
         city,
+        state: 'Delhi',
         pincode,
         isDefault: !!isDefault
       }

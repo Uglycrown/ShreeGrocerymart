@@ -2,7 +2,7 @@
 const { MongoClient } = require('mongodb');
 
 async function initReplicaSet() {
-  const uri = 'mongodb://localhost:27018/?directConnection=true';
+  const uri = 'mongodb://localhost:27017/?directConnection=true';
   const client = new MongoClient(uri);
 
   try {
@@ -20,7 +20,7 @@ async function initReplicaSet() {
         console.log('Initializing replica set...');
         const config = {
           _id: 'rs0',
-          members: [{ _id: 0, host: 'localhost:27018' }]
+          members: [{ _id: 0, host: 'localhost:27017' }]
         };
         
         const result = await admin.command({ replSetInitiate: config });

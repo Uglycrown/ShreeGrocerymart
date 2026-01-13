@@ -6,14 +6,17 @@ import Link from 'next/link'
 import ProductCard from '@/components/products/ProductCard'
 import CartSidebar from '@/components/cart/CartSidebar'
 import { ChevronRight, ShoppingBag } from 'lucide-react'
+import { useCartStore } from '@/lib/store'
 
 export default function Home() {
   const [products, setProducts] = useState<any[]>([])
   const [categories, setCategories] = useState<any[]>([])
   const [banners, setBanners] = useState<any[]>([])
   const [isCartOpen, setIsCartOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     fetchData()
   }, [])
 
@@ -42,10 +45,13 @@ export default function Home() {
   const heroBanner = banners.find((b) => b.type === 'HERO')
   const categoryBanners = banners.filter((b) => b.type === 'CATEGORY')
   const featuredProducts = products.filter((p) => p.isFeatured)
+  const { getItemsCount } = useCartStore()
+  const cartCount = getItemsCount()
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Banner */}
+      {/* ... Hero, Category, Products ... */}
+
       {heroBanner && (
         <section className="bg-gradient-to-r from-green-400 to-green-600 py-16 px-4">
           <div className="container mx-auto text-white">
@@ -207,9 +213,14 @@ export default function Home() {
       {/* Floating Cart Button */}
       <button
         onClick={() => setIsCartOpen(true)}
-        className="fixed bottom-24 md:bottom-8 right-6 bg-green-600 text-white p-4 rounded-full shadow-lg hover:bg-green-700 transition-colors z-30 shadow-[0_4px_20px_rgba(0,0,0,0.15)]"
+        className={`fixed bottom-24 md:bottom-8 right-6 bg-green-600 text-white p-4 rounded-full shadow-lg hover:bg-green-700 transition-all z-30 shadow-[0_4px_20px_rgba(0,0,0,0.15)] ${mounted && cartCount > 0 ? 'animate-bounce' : ''}`}
       >
         <ShoppingBag className="w-6 h-6" />
+        {mounted && cartCount > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white animate-in zoom-in duration-300">
+            {cartCount}
+          </span>
+        )}
       </button>
     </div>
   )

@@ -1,15 +1,19 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Package, Clock, CheckCircle, XCircle, Truck, Eye, FileText } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 
 interface DeliveryAddress {
-  addressType: string;
-  flat: string;
-  floor: string;
-  area: string;
-  landmark: string;
+  addressType?: string;
+  address?: string;
+  street?: string;
+  flat?: string;
+  floor?: string;
+  area?: string;
+  landmark?: string;
+  city?: string;
+  pincode?: string;
 }
 
 interface Order {
@@ -47,7 +51,7 @@ export default function OrdersManager({ onUpdate }: OrdersManagerProps) {
       const url = statusFilter === 'all' ? '/api/orders' : `/api/orders?status=${statusFilter}`
       const response = await fetch(url)
       const data = await response.json()
-      if (data.length > orders.length) {
+      if (data.length > orders.length && !loading) {
         setNotification(`New order received: ${data[0].orderNumber}`)
         setTimeout(() => setNotification(null), 5000)
       }
@@ -57,24 +61,30 @@ export default function OrdersManager({ onUpdate }: OrdersManagerProps) {
     } finally {
       if (loading) setLoading(false)
     }
-  }, [statusFilter, orders, loading])
+  }, [statusFilter, orders.length, loading])
 
   useEffect(() => {
     fetchOrders()
     const interval = setInterval(() => {
       fetchOrders()
-    }, 5000)
+    }, 10000) // Poll every 10s
     return () => clearInterval(interval)
   }, [fetchOrders])
 
   useEffect(() => {
     if (selectedOrder) {
       if (typeof selectedOrder.deliveryAddress === 'string') {
-        const parsedAddress = JSON.parse(selectedOrder.deliveryAddress);
-        setSelectedOrderAddress(parsedAddress);
+        try {
+          const parsedAddress = JSON.parse(selectedOrder.deliveryAddress);
+          setSelectedOrderAddress(parsedAddress);
+        } catch (e) {
+          setSelectedOrderAddress({ address: selectedOrder.deliveryAddress });
+        }
       } else {
         setSelectedOrderAddress(selectedOrder.deliveryAddress);
       }
+    } else {
+      setSelectedOrderAddress(null);
     }
   }, [selectedOrder]);
 
@@ -150,14 +160,20 @@ export default function OrdersManager({ onUpdate }: OrdersManagerProps) {
 
   return (
     <div>
+      {notification && (
+        <div className="fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-[100] animate-in fade-in slide-in-from-top-4 duration-300">
+          {notification}
+        </div>
+      )}
+
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Orders Management</h2>
-        <div className="flex gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-2">
           {['all', 'pending', 'confirmed', 'processing', 'out_for_delivery', 'delivered', 'cancelled'].map((status) => (
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
-              className={`px-3 py-1 rounded-lg text-sm font-medium ${
+              className={`px-3 py-1 rounded-lg text-sm font-medium whitespace-nowrap ${
                 statusFilter === status
                   ? 'bg-green-600 text-white'
                   : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
@@ -192,7 +208,7 @@ export default function OrdersManager({ onUpdate }: OrdersManagerProps) {
                     <div className="text-sm font-medium text-gray-900">{order.customerName}</div>
                     <div className="text-sm text-gray-900">{order.customerPhone}</div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-800">{order.items.length} items</td>
+                  <td className="px-6 py-4 text-sm text-gray-800">{order.items?.length || 0} items</td>
                   <td className="px-6 py-4 text-sm font-semibold text-gray-900">{formatPrice(order.total)}</td>
                   <td className="px-6 py-4">
                     <select
@@ -292,7 +308,17 @@ export default function OrdersManager({ onUpdate }: OrdersManagerProps) {
                 <div className="bg-gray-50 rounded p-4 space-y-2">
                   <p className="text-gray-900"><span className="font-medium">Name:</span> {selectedOrder.customerName}</p>
                   <p className="text-gray-900"><span className="font-medium">Phone:</span> {selectedOrder.customerPhone}</p>
-                  <p className="text-gray-900"><span className="font-medium">Address:</span> {selectedOrder.deliveryAddress.address}, {selectedOrder.deliveryAddress.city}, {selectedOrder.deliveryAddress.pincode}</p>
+                  <p className="text-gray-900">
+                    <span className="font-medium">Address:</span> {' '}
+                    {selectedOrderAddress ? (
+                      <>
+                        {selectedOrderAddress.address || selectedOrderAddress.street || ''}
+                        {selectedOrderAddress.landmark && `, ${selectedOrderAddress.landmark}`}
+                        {selectedOrderAddress.city && `, ${selectedOrderAddress.city}`}
+                        {selectedOrderAddress.pincode && `, ${selectedOrderAddress.pincode}`}
+                      </>
+                    ) : 'N/A'}
+                  </p>
                 </div>
               </div>
 
@@ -300,7 +326,7 @@ export default function OrdersManager({ onUpdate }: OrdersManagerProps) {
               <div>
                 <h4 className="font-semibold text-gray-900 mb-2">Order Items</h4>
                 <div className="space-y-2">
-                  {selectedOrder.items.map((item, index) => (
+                  {selectedOrder.items?.map((item, index) => (
                     <div key={index} className="flex justify-between bg-gray-50 rounded p-3">
                       <div>
                         <p className="font-medium text-gray-900">{item.name}</p>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useCartStore } from '@/lib/store'
 import { formatPrice } from '@/lib/utils'
 import { ArrowLeft, MapPin, Clock, ShoppingBag, Loader2, User } from 'lucide-react'
@@ -11,15 +11,16 @@ import { useSession } from 'next-auth/react'
 
 export default function CheckoutPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const addressIdParam = searchParams.get('addressId')
+  
   const { data: session, status } = useSession()
   const { items, getTotal, getItemsCount, clearCart } = useCartStore()
   const [isProcessing, setIsProcessing] = useState(false)
   const [mounted, setMounted] = useState(false)
   
-  // New States for Address Management
   const [savedAddresses, setSavedAddresses] = useState<any[]>([])
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null)
-  const [isAddingNew, setIsAddingNew] = useState(true)
 
   const itemsTotal = getTotal()
   const deliveryCharge = 25
@@ -71,7 +72,7 @@ export default function CheckoutPage() {
     if (userId) {
       fetchSavedAddresses(userId)
     }
-  }, [status, session, router])
+  }, [status, session, router, addressIdParam])
 
   const fetchSavedAddresses = async (userId: string) => {
     try {
@@ -79,35 +80,34 @@ export default function CheckoutPage() {
       if (res.ok) {
         const data = await res.json()
         setSavedAddresses(data)
-        if (data.length > 0) {
-          setIsAddingNew(false)
-          setSelectedAddressId(data[0].id)
-          // Pre-fill form with default address
-          const def = data.find((a: any) => a.isDefault) || data[0]
+        
+        let selectedAddr = null
+        
+        if (addressIdParam) {
+          selectedAddr = data.find((a: any) => a.id === addressIdParam)
+        }
+        
+        if (!selectedAddr && data.length > 0) {
+          selectedAddr = data.find((a: any) => a.isDefault) || data[0]
+        }
+
+        if (selectedAddr) {
+          setSelectedAddressId(selectedAddr.id)
           setFormData(prev => ({
             ...prev,
-            address: def.street,
-            landmark: def.landmark || '',
-            city: def.city,
-            pincode: def.pincode
+            address: selectedAddr.street,
+            landmark: selectedAddr.landmark || '',
+            city: selectedAddr.city,
+            pincode: selectedAddr.pincode
           }))
+        } else {
+            // No address selected or found, redirect to address selection
+            // router.push('/checkout/address')
         }
       }
     } catch (err) {
       console.error('Error fetching addresses:', err)
     }
-  }
-
-  const handleSelectAddress = (addr: any) => {
-    setSelectedAddressId(addr.id)
-    setIsAddingNew(false)
-    setFormData(prev => ({
-      ...prev,
-      address: addr.street,
-      landmark: addr.landmark || '',
-      city: addr.city,
-      pincode: addr.pincode
-    }))
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -136,22 +136,6 @@ export default function CheckoutPage() {
         alert('Please login to place an order')
         router.push('/login')
         return
-      }
-
-      // Auto-save address if it's new
-      if (isAddingNew) {
-        await fetch('/api/addresses', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId,
-            street: formData.address,
-            landmark: formData.landmark,
-            city: formData.city,
-            pincode: formData.pincode,
-            isDefault: savedAddresses.length === 0
-          })
-        })
       }
 
       // Prepare order data
@@ -277,21 +261,9 @@ export default function CheckoutPage() {
                       <MapPin className="w-5 h-5 text-green-600" />
                       <h2 className="text-xl font-semibold text-gray-900">Delivery Address</h2>
                     </div>
-                    {savedAddresses.length > 0 && (
-                      <button 
-                        type="button"
-                        onClick={() => {
-                          setIsAddingNew(!isAddingNew);
-                          if (!isAddingNew) setSelectedAddressId(null);
-                        }}
-                        className="text-green-600 text-sm font-bold hover:text-green-700"
-                      >
-                        {isAddingNew ? 'Select Saved' : '+ Add New'}
-                      </button>
-                    )}
                   </div>
 
-                  {!isAddingNew && selectedAddressId ? (
+                  {formData.address ? (
                     <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                       <div className="flex justify-between items-start">
                         <div>
@@ -300,47 +272,24 @@ export default function CheckoutPage() {
                             {formData.landmark ? `${formData.landmark}, ` : ''}{formData.address}, {formData.pincode}
                           </p>
                         </div>
-                        <button 
-                          type="button" 
-                          onClick={() => setIsAddingNew(true)}
+                        <Link 
+                          href="/checkout/address"
                           className="bg-white text-green-600 border border-green-600 px-3 py-1 rounded text-xs font-bold hover:bg-green-50 transition"
                         >
                           CHANGE
-                        </button>
+                        </Link>
                       </div>
                     </div>
                   ) : (
-                    <div className="space-y-4">
-                      {savedAddresses.length > 0 && !isAddingNew && (
-                        <div className="grid gap-3 mb-4">
-                          {savedAddresses.map((addr) => (
-                            <div 
-                              key={addr.id}
-                              onClick={() => handleSelectAddress(addr)}
-                              className={`p-3 border-2 rounded-lg cursor-pointer transition ${selectedAddressId === addr.id ? 'border-green-600 bg-green-50' : 'border-gray-100 hover:border-gray-200'}`}
-                            >
-                              <p className="text-sm font-bold text-gray-900">{addr.label}</p>
-                              <p className="text-xs text-gray-600">{addr.street}, {addr.landmark}</p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Complete Address *</label>
-                        <textarea name="address" value={formData.address} onChange={handleChange} required rows={2} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="House No., Building Name, Street" />
-                      </div>
-
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Landmark *</label>
-                          <input type="text" name="landmark" value={formData.landmark} onChange={handleChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="e.g. Near Apollo Hospital" />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">Pincode *</label>
-                          <input type="text" name="pincode" value={formData.pincode} onChange={handleChange} required pattern="[0-9]{6}" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="110037" />
-                        </div>
-                      </div>
+                    <div className="text-center py-6 border-2 border-dashed border-gray-300 rounded-lg">
+                      <p className="text-gray-500 mb-4">No address selected</p>
+                      <Link 
+                        href="/checkout/address"
+                        className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-700 transition"
+                      >
+                        <MapPin className="w-4 h-4" />
+                        Select Address
+                      </Link>
                     </div>
                   )}
                 </div>
@@ -430,7 +379,7 @@ export default function CheckoutPage() {
                 <button
                   type="submit"
                   form="checkout-form"
-                  disabled={isProcessing}
+                  disabled={isProcessing || !formData.address}
                   className="hidden lg:block w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-4 rounded-lg transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed text-lg shadow-lg"
                 >
                   {isProcessing ? 'Processing...' : `Place Order`}
@@ -455,7 +404,7 @@ export default function CheckoutPage() {
           <button
             type="submit"
             form="checkout-form"
-            disabled={isProcessing}
+            disabled={isProcessing || !formData.address}
             className="flex-1 max-w-[200px] bg-green-600 hover:bg-green-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 disabled:bg-gray-400 disabled:cursor-not-allowed shadow-md flex items-center justify-center gap-2"
           >
             {isProcessing ? (

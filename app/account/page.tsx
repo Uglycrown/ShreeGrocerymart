@@ -7,6 +7,7 @@ import { useSession, signOut } from 'next-auth/react'
 import { formatPrice } from '@/lib/utils'
 
 export default function AccountPage() {
+  const [mounted, setMounted] = useState(false)
 // ... keep state and effects ...
 
 
