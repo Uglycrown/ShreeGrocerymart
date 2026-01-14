@@ -11,7 +11,7 @@ let cachedDb: Db | null = null
 let indexesCreated = false
 
 export async function getMongoClient() {
-  if (cachedClient && cachedClient.topology && cachedClient.topology.isConnected()) {
+  if (cachedClient) {
     return cachedClient
   }
 
@@ -29,7 +29,7 @@ export async function getMongoClient() {
 }
 
 export async function getDb() {
-  if (cachedDb && cachedClient && cachedClient.topology && cachedClient.topology.isConnected()) {
+  if (cachedDb && cachedClient) {
     return cachedDb
   }
 
