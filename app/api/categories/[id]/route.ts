@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/mongodb'
 import { ObjectId } from 'mongodb'
+import { invalidateCategoriesCache } from '@/lib/categories-cache'
 
 export async function GET(
   request: NextRequest,
@@ -101,6 +102,9 @@ export async function PATCH(
       return NextResponse.json({ error: 'Category not found' }, { status: 404 })
     }
 
+    // Invalidate cache
+    invalidateCategoriesCache()
+
     const category = await db.collection('Category').findOne({ _id: new ObjectId(id) })
     
     if (!category) {
@@ -130,6 +134,9 @@ export async function DELETE(
     if (result.deletedCount === 0) {
       return NextResponse.json({ error: 'Category not found' }, { status: 404 })
     }
+
+    // Invalidate cache
+    invalidateCategoriesCache()
 
     return NextResponse.json({ message: 'Category deleted successfully' })
   } catch (error) {

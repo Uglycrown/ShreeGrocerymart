@@ -1,45 +1,64 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/mongodb'
 import { ObjectId } from 'mongodb'
+import { categoriesCache, CACHE_DURATION, invalidateCategoriesCache } from '@/lib/categories-cache'
 
 // GET all categories
 export async function GET() {
   try {
-    const db = await getDb()
-    const pipeline = [
-      {
-        $lookup: {
-          from: 'Product',
-          localField: '_id',
-          foreignField: 'categoryId',
-          as: 'products',
+    // Check cache first
+    const now = Date.now()
+    if (categoriesCache.data && (now - categoriesCache.timestamp) < CACHE_DURATION) {
+      return NextResponse.json(categoriesCache.data, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
         },
-      },
-      {
-        $addFields: {
-          productCount: { $size: '$products' },
-        },
-      },
-      {
-        $sort: { order: 1 },
-      },
-      {
-        $project: {
-          id: '$_id',
-          name: 1,
-          slug: 1,
-          description: 1,
-          image: 1,
-          priority: { $ifNull: ['$priority', 0] },
-          isActive: { $ifNull: ['$isActive', true] },
-          _count: { products: '$productCount' },
-          _id: 0,
-        },
-      },
-    ]
+      })
+    }
 
-    const categoriesWithCounts = await db.collection('Category').aggregate(pipeline).toArray()
-    return NextResponse.json(categoriesWithCounts)
+    const db = await getDb()
+    
+    // Optimized query - removed expensive $lookup aggregation
+    const categories = await db
+      .collection('Category')
+      .find(
+        { isActive: true },
+        {
+          projection: {
+            _id: 1,
+            name: 1,
+            slug: 1,
+            description: 1,
+            image: 1,
+            priority: 1,
+            isActive: 1,
+            order: 1,
+          },
+        }
+      )
+      .sort({ order: 1, priority: 1 })
+      .toArray()
+
+    // Transform to match expected format
+    const formattedCategories = categories.map(cat => ({
+      id: cat._id.toString(),
+      name: cat.name,
+      slug: cat.slug,
+      description: cat.description || '',
+      image: cat.image || '',
+      priority: cat.priority || 0,
+      isActive: cat.isActive ?? true,
+    }))
+
+    // Update cache
+    categoriesCache.data = formattedCategories
+    categoriesCache.timestamp = now
+
+    return NextResponse.json(formattedCategories, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+      },
+    })
   } catch (error) {
     console.error('Error fetching categories:', error)
     return NextResponse.json({ error: 'Failed to fetch categories' }, { status: 500 })
@@ -80,6 +99,9 @@ export async function POST(request: NextRequest) {
     }
 
     await db.collection('Category').insertOne(category)
+
+    // Invalidate cache
+    invalidateCategoriesCache()
 
     return NextResponse.json({
       id: category._id.toString(),
