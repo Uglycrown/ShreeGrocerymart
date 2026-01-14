@@ -1,70 +1,109 @@
 # Smart Loader Implementation
 
 ## Overview
-Added a modern, intelligent loader that displays only on first visit and automatically removes itself when content is rendered.
+Added a modern loader that displays for exactly 3 seconds on first visit while content loads in the background.
 
 ## Features
 
-### 🎯 Smart Content Detection
-- **Real-time monitoring**: Checks DOM for rendered content every 150ms
-- **Multiple detection methods**: 
-  - Checks for container elements
-  - Counts rendered images (threshold: 3+)
-  - Detects section elements
-  - Listens for custom 'contentReady' event
-- **Instant removal**: Hides immediately when content is detected (200ms fade)
+### ⏱️ Fixed Timing
+- **Exact 3-second display**: Loader shows for precisely 3 seconds
+- **Background loading**: Products and categories load while loader is visible
+- **Smooth transition**: Content is ready when loader disappears
+- **Session-based**: Shows only once per browser session
 
 ### 🎨 Visual Design
-- **Gradient background**: Smooth green-to-white gradient
+- **Gradient background**: Smooth green-to-white gradient (z-index: 100)
 - **Animated shopping bag icon**: Bouncing animation in gradient card
 - **App branding**: "Shree Grocery Mart" with gradient text
 - **Loading dots**: Three bouncing dots with staggered animation
-- **Progress bar**: Animated progress indicator
-- **Smooth transitions**: 500ms fade-out animation
+- **Progress bar**: 3-second animated progress indicator
+- **Smooth fade-out**: 500ms transition when hiding
 
 ### 💾 Session Management
 - **sessionStorage tracking**: Shows only once per browser session
-- **Respects user**: Won't show again after first load
-- **Fallback timeout**: Auto-hides after 4 seconds maximum
+- **Respects user**: Won't show again after first load in same session
+- **New tab/window**: Will show again in new browser tabs
 
 ## Technical Implementation
 
 ### Files Modified
-1. **components/AppLoader.tsx** - Main loader component
-2. **components/ContentLoader.tsx** - Content wrapper helper (optional)
-3. **app/layout.tsx** - Added loader to root layout
-4. **app/page.tsx** - Dispatches contentReady event when data loads
+1. **components/AppLoader.tsx** - Main loader component (z-index: 100)
+2. **app/layout.tsx** - Added loader to root layout
+3. **app/page.tsx** - Fetches data immediately on mount
 
 ### How It Works
-1. Loader renders on initial page load
-2. Checks sessionStorage - if visited, hides instantly
-3. Monitors page for content:
-   - Polls DOM every 150ms
-   - Listens for contentReady event from home page
-   - Checks document.readyState
-4. When content detected → Fade out (200ms) → Set session flag
-5. Fallback: Force hide after 4 seconds
+```
+Timeline:
+0ms:   - User opens app
+       - Loader displays (visible)
+       - Background: Header/Footer render
+       - Background: API calls start (products, categories, banners)
 
-### Integration Points
+0-3000ms:
+       - Loader shows with animated progress bar
+       - Background: Data fetches and renders behind loader
+       - Content builds in DOM (invisible under loader)
+
+3000ms:
+       - Loader fades out (500ms transition)
+       - Fully rendered content revealed
+       - sessionStorage flag set
+
+Next visit (same session):
+       - Loader hidden instantly
+       - Content displays immediately
+```
+
+### Z-Index Structure
+```
+z-100:  AppLoader (covers everything during first 3 seconds)
+z-10:   Content (Header, Pages, Footer, BottomNav)
+z-0:    BackgroundPattern
+```
+
+### Integration
 ```typescript
-// Home page dispatches event when data loaded
-window.dispatchEvent(new CustomEvent('contentReady'))
+// app/page.tsx - Starts loading immediately
+useEffect(() => {
+  setMounted(true)
+  fetchData() // Fetches while loader shows
+}, [])
 ```
 
 ## User Experience
-- **First visit**: Loader shows → Content loads → Instant removal
-- **Same session**: No loader (instant app display)
-- **New session**: Loader shows again
-- **Slow connections**: Maximum 4-second display
+- **First visit (new session)**: 
+  - Loader shows for 3 seconds
+  - Content loads in background
+  - Smooth reveal of fully loaded page
+  
+- **Same session**: 
+  - No loader (instant display)
+  - sessionStorage prevents re-show
+  
+- **New session/tab**: 
+  - Loader shows again
+  - Fresh experience for new visits
 
 ## Performance
+- Content renders immediately (not blocked by loader)
+- API calls start on component mount
+- 3-second window ensures content is ready
 - Zero impact after first load (early return)
-- Lightweight DOM checks
-- Efficient event listeners
-- Cleanup on unmount
+- Efficient cleanup on unmount
 
 ## Customization
 Adjust timing in `AppLoader.tsx`:
-- `interval`: 150ms (content check frequency)
-- `maxTimeout`: 4000ms (fallback timeout)
-- `fadeDelay`: 200ms (removal delay)
+```typescript
+const timer = setTimeout(() => {
+  setIsVisible(false)
+  sessionStorage.setItem('hasVisited', 'true')
+}, 3000) // Change this value (in milliseconds)
+```
+
+Progress bar animation in CSS:
+```css
+.animate-progress {
+  animation: progress 3s ease-out forwards; // Match timer duration
+}
+```
+

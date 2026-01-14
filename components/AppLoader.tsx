@@ -17,50 +17,14 @@ export default function AppLoader() {
       return
     }
 
-    // Listen for content ready event
-    const handleContentReady = () => {
-      setTimeout(() => {
-        setIsVisible(false)
-        sessionStorage.setItem('hasVisited', 'true')
-      }, 200)
-    }
-
-    // Check if content is loaded
-    const checkContentLoaded = () => {
-      if (document.readyState === 'complete') {
-        const hasContent = document.querySelector('[class*="container"]') || 
-                          document.querySelectorAll('img').length > 3 ||
-                          document.querySelectorAll('section').length > 0
-
-        if (hasContent) {
-          handleContentReady()
-          return true
-        }
-      }
-      return false
-    }
-
-    // Listen for custom content ready event
-    window.addEventListener('contentReady', handleContentReady)
-
-    // Check periodically until content is loaded
-    const interval = setInterval(() => {
-      if (checkContentLoaded()) {
-        clearInterval(interval)
-      }
-    }, 150)
-
-    // Fallback: force hide after 4 seconds
-    const maxTimeout = setTimeout(() => {
+    // Show loader for exactly 3 seconds
+    const timer = setTimeout(() => {
       setIsVisible(false)
       sessionStorage.setItem('hasVisited', 'true')
-      clearInterval(interval)
-    }, 4000)
+    }, 3000)
 
     return () => {
-      clearInterval(interval)
-      clearTimeout(maxTimeout)
-      window.removeEventListener('contentReady', handleContentReady)
+      clearTimeout(timer)
     }
   }, [])
 
@@ -68,7 +32,7 @@ export default function AppLoader() {
 
   return (
     <div
-      className={`fixed inset-0 z-[9999] bg-gradient-to-br from-green-50 via-white to-green-50 flex items-center justify-center transition-opacity duration-500 ${
+      className={`fixed inset-0 z-[100] bg-gradient-to-br from-green-50 via-white to-green-50 flex items-center justify-center transition-opacity duration-500 ${
         isVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
       }`}
     >
@@ -130,7 +94,7 @@ export default function AppLoader() {
         }
 
         .animate-progress {
-          animation: progress 2.5s ease-out forwards;
+          animation: progress 3s ease-out forwards;
         }
       `}</style>
     </div>
