@@ -1,0 +1,32 @@
+{
+  "functions": {
+    "app/api/categories/route.ts": {
+      "maxDuration": 10,
+      "memory": 1024
+    },
+    "app/api/products/route.ts": {
+      "maxDuration": 10,
+      "memory": 1024
+    }
+  },
+  "headers": [
+    {
+      "source": "/api/categories",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, s-maxage=300, stale-while-revalidate=600"
+        }
+      ]
+    },
+    {
+      "source": "/api/products",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, s-maxage=180, stale-while-revalidate=360"
+        }
+      ]
+    }
+  ]
+}

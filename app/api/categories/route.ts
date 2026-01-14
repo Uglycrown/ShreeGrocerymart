@@ -1,25 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/mongodb'
 import { ObjectId } from 'mongodb'
-import { categoriesCache, CACHE_DURATION, invalidateCategoriesCache } from '@/lib/categories-cache'
 
-// GET all categories
-export async function GET() {
+// GET all categories - Optimized for Vercel
+export async function GET(request: NextRequest) {
   try {
-    // Check cache first
-    const now = Date.now()
-    if (categoriesCache.data && (now - categoriesCache.timestamp) < CACHE_DURATION) {
-      return NextResponse.json(categoriesCache.data, {
-        headers: {
-          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
-        },
-      })
-    }
-
     const db = await getDb()
     
-    // Optimized query - removed expensive $lookup aggregation
-    const categories = await db
+    // Use a timeout to prevent long-running queries
+    const queryTimeout = 5000 // 5 seconds max
+    
+    // Optimized query with timeout
+    const categoriesPromise = db
       .collection('Category')
       .find(
         { isActive: true },
@@ -34,10 +26,19 @@ export async function GET() {
             isActive: 1,
             order: 1,
           },
+          maxTimeMS: queryTimeout,
         }
       )
       .sort({ order: 1, priority: 1 })
+      .limit(100) // Limit results to prevent large responses
       .toArray()
+
+    const categories = await Promise.race([
+      categoriesPromise,
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Query timeout')), queryTimeout)
+      )
+    ]) as any[]
 
     // Transform to match expected format
     const formattedCategories = categories.map(cat => ({
@@ -50,17 +51,26 @@ export async function GET() {
       isActive: cat.isActive ?? true,
     }))
 
-    // Update cache
-    categoriesCache.data = formattedCategories
-    categoriesCache.timestamp = now
-
     return NextResponse.json(formattedCategories, {
       headers: {
-        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600, max-age=60',
+        'CDN-Cache-Control': 'public, s-maxage=300',
+        'Vercel-CDN-Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
       },
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching categories:', error)
+    
+    // Return empty array instead of error for better UX
+    if (error.message === 'Query timeout') {
+      return NextResponse.json([], {
+        status: 200,
+        headers: {
+          'Cache-Control': 'public, max-age=60',
+        },
+      })
+    }
+    
     return NextResponse.json({ error: 'Failed to fetch categories' }, { status: 500 })
   }
 }
@@ -99,9 +109,6 @@ export async function POST(request: NextRequest) {
     }
 
     await db.collection('Category').insertOne(category)
-
-    // Invalidate cache
-    invalidateCategoriesCache()
 
     return NextResponse.json({
       id: category._id.toString(),

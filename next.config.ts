@@ -16,6 +16,11 @@ const nextConfig: NextConfig = {
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
+  // Optimize for Vercel serverless
+  serverExternalPackages: ['mongodb'],
+  experimental: {
+    serverMinification: true,
+  },
 };
 
 export default nextConfig;
