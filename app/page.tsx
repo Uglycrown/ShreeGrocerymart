@@ -14,6 +14,7 @@ export default function Home() {
   const [banners, setBanners] = useState<any[]>([])
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     setMounted(true)
@@ -37,8 +38,15 @@ export default function Home() {
       setProducts(productsData)
       setCategories(categoriesData)
       setBanners(bannersData)
+      setIsLoading(false)
+      
+      // Signal that content is ready
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('contentReady'))
+      }, 100)
     } catch (error) {
       console.error('Error fetching data:', error)
+      setIsLoading(false)
     }
   }
 
