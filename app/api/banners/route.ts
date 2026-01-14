@@ -18,7 +18,13 @@ export async function GET() {
     return NextResponse.json(bannersWithId)
   } catch (error) {
     console.error('Error fetching banners:', error)
-    return NextResponse.json({ error: 'Failed to fetch banners' }, { status: 500 })
+    // Return an empty array on error to prevent client-side crashes
+    return NextResponse.json([], {
+      status: 200, // OK status, but empty data
+      headers: {
+        'Cache-Control': 'public, max-age=10', // Short cache on error
+      },
+    })
   }
 }
 

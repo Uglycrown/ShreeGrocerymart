@@ -71,7 +71,13 @@ export async function GET(request: NextRequest) {
       })
     }
     
-    return NextResponse.json({ error: 'Failed to fetch categories' }, { status: 500 })
+    // For other errors, also return an empty array to prevent client-side errors
+    return NextResponse.json([], {
+      status: 200, // Changed from 500 to 200 for graceful client handling
+      headers: {
+        'Cache-Control': 'public, max-age=10', // Short cache for error state
+      },
+    })
   }
 }
 
