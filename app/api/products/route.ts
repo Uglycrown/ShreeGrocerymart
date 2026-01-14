@@ -14,10 +14,11 @@ export async function GET(request: NextRequest) {
     const where: any = { isActive: true }
 
     if (categoryId) {
-      const { ObjectId } = require('mongodb')
       where.categoryId = new ObjectId(categoryId)
     } else if (category) {
-      where.categoryId = category
+      // This part might need adjustment if `category` is a slug or name
+      // For now, assuming it's a string that needs to be matched against category properties
+      // This logic will be handled in the aggregation pipeline
     }
 
     if (search) {
@@ -33,23 +34,61 @@ export async function GET(request: NextRequest) {
     }
 
     const db = await getDb()
-    const products = await db.collection('Product').find(where).sort({ createdAt: -1 }).toArray()
 
-    // Populate category info
-    const productsWithCategory = await Promise.all(
-      products.map(async (product) => {
-        const category = await db.collection('Category').findOne({ _id: product.categoryId })
-        return {
-          ...product,
-          id: product._id.toString(),
-          category: category ? {
-            id: category._id.toString(),
-            name: category.name,
-            slug: category.slug,
-          } : null,
-        }
+    const pipeline: any[] = [
+      { $match: where },
+      { $sort: { createdAt: -1 } },
+      {
+        $lookup: {
+          from: 'Category',
+          localField: 'categoryId',
+          foreignField: '_id',
+          as: 'categoryInfo',
+        },
+      },
+      {
+        $unwind: {
+          path: '$categoryInfo',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+    ]
+
+    if (category) {
+      pipeline.push({
+        $match: {
+          'categoryInfo.slug': category,
+        },
       })
-    )
+    }
+
+    pipeline.push({
+      $project: {
+        // Exclude fields from the final output
+        categoryInfo: 0,
+        categoryId: 0,
+      },
+    })
+
+    const products = await db.collection('Product').aggregate(pipeline).toArray()
+
+    // Transform the result to match the expected output structure
+    const productsWithCategory = products.map((product) => {
+      const { _id, ...rest } = product
+      const category = product.categoryInfo
+        ? {
+            id: product.categoryInfo._id.toString(),
+            name: product.categoryInfo.name,
+            slug: product.categoryInfo.slug,
+          }
+        : null
+
+      return {
+        ...rest,
+        id: _id.toString(),
+        category,
+      }
+    })
 
     return NextResponse.json(productsWithCategory)
   } catch (error) {

@@ -6,28 +6,39 @@ import { ObjectId } from 'mongodb'
 export async function GET() {
   try {
     const db = await getDb()
-    const categories = await db.collection('Category')
-      .find({})
-      .sort({ order: 1 })
-      .toArray()
+    const pipeline = [
+      {
+        $lookup: {
+          from: 'Product',
+          localField: '_id',
+          foreignField: 'categoryId',
+          as: 'products',
+        },
+      },
+      {
+        $addFields: {
+          productCount: { $size: '$products' },
+        },
+      },
+      {
+        $sort: { order: 1 },
+      },
+      {
+        $project: {
+          id: '$_id',
+          name: 1,
+          slug: 1,
+          description: 1,
+          image: 1,
+          priority: { $ifNull: ['$priority', 0] },
+          isActive: { $ifNull: ['$isActive', true] },
+          _count: { products: '$productCount' },
+          _id: 0,
+        },
+      },
+    ]
 
-    const categoriesWithCounts = await Promise.all(
-      categories.map(async (cat) => {
-        const productCount = await db.collection('Product').countDocuments({ categoryId: cat._id })
-        
-        return {
-          id: cat._id.toString(),
-          name: cat.name,
-          slug: cat.slug,
-          description: cat.description,
-          image: cat.image,
-          priority: cat.priority || 0,
-          isActive: cat.isActive ?? true,
-          _count: { products: productCount },
-        }
-      })
-    )
-
+    const categoriesWithCounts = await db.collection('Category').aggregate(pipeline).toArray()
     return NextResponse.json(categoriesWithCounts)
   } catch (error) {
     console.error('Error fetching categories:', error)
