@@ -186,13 +186,17 @@ export default function ProductPage() {
             <button onClick={() => router.push('/')} className="hover:text-green-600">
               Home
             </button>
-            <span>/</span>
-            <button
-              onClick={() => router.push(`/category/${product.category.slug}`)}
-              className="hover:text-green-600"
-            >
-              {product.category.name}
-            </button>
+            {product.category && (
+              <>
+                <span>/</span>
+                <button
+                  onClick={() => router.push(`/category/${product.category.slug}`)}
+                  className="hover:text-green-600"
+                >
+                  {product.category.name}
+                </button>
+              </>
+            )}
             <span>/</span>
             <span className="text-gray-900">{product.name}</span>
           </div>
