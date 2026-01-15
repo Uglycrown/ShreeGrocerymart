@@ -1,17 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/mongodb'
 import { ObjectId } from 'mongodb'
+import { serverCache, CACHE_KEYS, CACHE_TTL } from '@/lib/server-cache'
 
-// GET all categories - Optimized for Vercel
+// GET all categories - Ultra-optimized with in-memory caching
 export async function GET(request: NextRequest) {
   try {
+    // Check in-memory cache first (instant response)
+    const cached = serverCache.get<any[]>(CACHE_KEYS.CATEGORIES)
+    if (cached) {
+      return NextResponse.json(cached, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+          'X-Cache': 'HIT',
+        },
+      })
+    }
+
     const db = await getDb()
-    
-    // Use a timeout to prevent long-running queries
-    const queryTimeout = 5000 // 5 seconds max
-    
-    // Optimized query with timeout
-    const categoriesPromise = db
+
+    // Optimized query with lean projection
+    const categories = await db
       .collection('Category')
       .find(
         { isActive: true },
@@ -23,24 +32,16 @@ export async function GET(request: NextRequest) {
             description: 1,
             image: 1,
             priority: 1,
-            isActive: 1,
             order: 1,
           },
-          maxTimeMS: queryTimeout,
+          maxTimeMS: 3000,
         }
       )
       .sort({ order: 1, priority: 1 })
-      .limit(100) // Limit results to prevent large responses
+      .limit(50)
       .toArray()
 
-    const categories = await Promise.race([
-      categoriesPromise,
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Query timeout')), queryTimeout)
-      )
-    ]) as any[]
-
-    // Transform to match expected format
+    // Transform data
     const formattedCategories = categories.map(cat => ({
       id: cat._id.toString(),
       name: cat.name,
@@ -48,35 +49,25 @@ export async function GET(request: NextRequest) {
       description: cat.description || '',
       image: cat.image || '',
       priority: cat.priority || 0,
-      isActive: cat.isActive ?? true,
+      isActive: true,
     }))
+
+    // Store in cache
+    serverCache.set(CACHE_KEYS.CATEGORIES, formattedCategories, CACHE_TTL.CATEGORIES)
 
     return NextResponse.json(formattedCategories, {
       headers: {
-        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600, max-age=60',
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
         'CDN-Cache-Control': 'public, s-maxage=300',
         'Vercel-CDN-Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        'X-Cache': 'MISS',
       },
     })
   } catch (error: any) {
     console.error('Error fetching categories:', error)
-    
-    // Return empty array instead of error for better UX
-    if (error.message === 'Query timeout') {
-      return NextResponse.json([], {
-        status: 200,
-        headers: {
-          'Cache-Control': 'public, max-age=60',
-        },
-      })
-    }
-    
-    // For other errors, also return an empty array to prevent client-side errors
     return NextResponse.json([], {
-      status: 200, // Changed from 500 to 200 for graceful client handling
-      headers: {
-        'Cache-Control': 'public, max-age=10', // Short cache for error state
-      },
+      status: 200,
+      headers: { 'Cache-Control': 'public, max-age=30' },
     })
   }
 }
@@ -87,13 +78,11 @@ export async function POST(request: NextRequest) {
     const data = await request.json()
     const db = await getDb()
 
-    // Generate slug from name
     const slug = data.name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '')
 
-    // Get max priority
     const maxPriorityCategory = await db.collection('Category')
       .find({})
       .sort({ priority: -1 })
@@ -115,6 +104,9 @@ export async function POST(request: NextRequest) {
     }
 
     await db.collection('Category').insertOne(category)
+
+    // Invalidate cache
+    serverCache.invalidate(CACHE_KEYS.CATEGORIES)
 
     return NextResponse.json({
       id: category._id.toString(),

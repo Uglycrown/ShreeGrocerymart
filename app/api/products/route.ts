@@ -1,8 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/mongodb'
 import { ObjectId } from 'mongodb'
+import { serverCache, CACHE_KEYS, CACHE_TTL } from '@/lib/server-cache'
 
-// GET all products with filters
+// Pre-cache categories for faster lookups
+let categoriesMap: Map<string, any> | null = null
+let categoriesMapTimestamp = 0
+const CATEGORIES_MAP_TTL = 5 * 60 * 1000 // 5 minutes
+
+async function getCategoriesMap(db: any): Promise<Map<string, any>> {
+  const now = Date.now()
+  if (categoriesMap && now - categoriesMapTimestamp < CATEGORIES_MAP_TTL) {
+    return categoriesMap
+  }
+
+  const categories = await db
+    .collection('Category')
+    .find({}, { projection: { _id: 1, name: 1, slug: 1 } })
+    .toArray()
+
+  categoriesMap = new Map()
+  for (const cat of categories) {
+    categoriesMap.set(cat._id.toString(), {
+      id: cat._id.toString(),
+      name: cat.name,
+      slug: cat.slug,
+    })
+  }
+  categoriesMapTimestamp = now
+  return categoriesMap
+}
+
+// GET all products with filters - Ultra-optimized
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
@@ -11,94 +40,124 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search')
     const featured = searchParams.get('featured')
 
-    const where: any = { isActive: true }
+    // Generate cache key based on params
+    const cacheKey = `products:${categoryId || ''}:${category || ''}:${search || ''}:${featured || ''}`
 
-    if (categoryId) {
-      where.categoryId = new ObjectId(categoryId)
-    } else if (category) {
-      // This part might need adjustment if `category` is a slug or name
-      // For now, assuming it's a string that needs to be matched against category properties
-      // This logic will be handled in the aggregation pipeline
-    }
-
-    if (search) {
-      where.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-        { tags: search },
-      ]
-    }
-
-    if (featured === 'true') {
-      where.isFeatured = true
+    // Check cache for non-search queries
+    if (!search) {
+      const cached = serverCache.get<any[]>(cacheKey)
+      if (cached) {
+        return NextResponse.json(cached, {
+          headers: {
+            'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=300',
+            'X-Cache': 'HIT',
+          },
+        })
+      }
     }
 
     const db = await getDb()
 
-    const pipeline: any[] = [
-      { $match: where },
-      { $sort: { createdAt: -1 } },
-      {
-        $lookup: {
-          from: 'Category',
-          localField: 'categoryId',
-          foreignField: '_id',
-          as: 'categoryInfo',
-        },
-      },
-      {
-        $unwind: {
-          path: '$categoryInfo',
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-    ]
+    // Build optimized query
+    const query: any = { isActive: true }
 
-    if (category) {
-      pipeline.push({
-        $match: {
-          'categoryInfo.slug': category,
-        },
-      })
+    if (categoryId) {
+      query.categoryId = new ObjectId(categoryId)
     }
 
-    pipeline.push({
-      $project: {
-        // Exclude fields from the final output
-        categoryInfo: 0,
-        categoryId: 0,
-      },
-    })
+    if (featured === 'true') {
+      query.isFeatured = true
+    }
 
-    const products = await db.collection('Product').aggregate(pipeline).toArray()
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { tags: { $in: [new RegExp(search, 'i')] } },
+      ]
+    }
 
-    // Transform the result to match the expected output structure
-    const productsWithCategory = products.map((product) => {
-      const { _id, ...rest } = product
-      const category = product.categoryInfo
-        ? {
-            id: product.categoryInfo._id.toString(),
-            name: product.categoryInfo.name,
-            slug: product.categoryInfo.slug,
-          }
-        : null
+    // Get categories map for fast lookups (avoids $lookup)
+    const catMap = await getCategoriesMap(db)
+
+    // Handle category slug filter
+    if (category) {
+      // Find category ID from slug
+      for (const [id, cat] of catMap.entries()) {
+        if (cat.slug === category) {
+          query.categoryId = new ObjectId(id)
+          break
+        }
+      }
+    }
+
+    // Optimized query - NO $lookup, NO $unwind
+    const products = await db
+      .collection('Product')
+      .find(query, {
+        projection: {
+          _id: 1,
+          name: 1,
+          slug: 1,
+          description: 1,
+          images: 1,
+          price: 1,
+          originalPrice: 1,
+          discount: 1,
+          unit: 1,
+          stock: 1,
+          isFeatured: 1,
+          deliveryTime: 1,
+          tags: 1,
+          categoryId: 1,
+        },
+        maxTimeMS: 5000,
+      })
+      .sort({ isFeatured: -1, createdAt: -1 })
+      .limit(100)
+      .toArray()
+
+    // Transform with category info from map (super fast)
+    const productsWithCategory = products.map(product => {
+      const catId = product.categoryId?.toString()
+      const categoryInfo = catId ? catMap.get(catId) : null
 
       return {
-        ...rest,
-        id: _id.toString(),
-        category,
+        id: product._id.toString(),
+        name: product.name,
+        slug: product.slug,
+        description: product.description,
+        images: product.images || [],
+        price: product.price,
+        originalPrice: product.originalPrice,
+        discount: product.discount,
+        unit: product.unit,
+        stock: product.stock,
+        isFeatured: product.isFeatured,
+        deliveryTime: product.deliveryTime,
+        tags: product.tags,
+        categoryId: catId,
+        category: categoryInfo,
       }
     })
 
-    return NextResponse.json(productsWithCategory)
+    // Cache for non-search queries
+    if (!search) {
+      serverCache.set(cacheKey, productsWithCategory, CACHE_TTL.PRODUCTS)
+    }
+
+    return NextResponse.json(productsWithCategory, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=300',
+        'CDN-Cache-Control': 'public, s-maxage=120',
+        'Vercel-CDN-Cache-Control': 'public, s-maxage=120, stale-while-revalidate=300',
+        'X-Cache': 'MISS',
+      },
+    })
   } catch (error) {
     console.error('Error fetching products:', error)
-    // Return an empty array on error to prevent client-side crashes
     return NextResponse.json([], {
-      status: 200, // OK status, but empty data
-      headers: {
-        'Cache-Control': 'public, max-age=10', // Short cache on error
-      },
+      status: 200,
+      headers: { 'Cache-Control': 'public, max-age=30' },
     })
   }
 }
@@ -107,14 +166,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    console.log('Creating product:', body)
-
     const db = await getDb()
-    
-    // Generate slug
+
     const slug = body.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')
-    
-    // Calculate discount if original price exists
+
     const discount = body.originalPrice
       ? Math.round(((body.originalPrice - body.price) / body.originalPrice) * 100)
       : null
@@ -139,10 +194,11 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
     }
 
-    const result = await db.collection('Product').insertOne(product)
-    console.log('Product created:', result.insertedId)
+    await db.collection('Product').insertOne(product)
 
-    // Fetch category info
+    // Invalidate all product caches
+    serverCache.invalidatePattern('products:')
+
     const category = await db.collection('Category').findOne({ _id: product.categoryId })
 
     return NextResponse.json({
@@ -156,11 +212,9 @@ export async function POST(request: NextRequest) {
     }, { status: 201 })
   } catch (error: any) {
     console.error('Error creating product:', error)
-    console.error('Error stack:', error.stack)
-    return NextResponse.json({ 
+    return NextResponse.json({
       error: 'Failed to create product',
       message: error.message,
-      details: error.toString()
     }, { status: 500 })
   }
 }

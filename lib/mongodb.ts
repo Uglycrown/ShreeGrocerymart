@@ -16,13 +16,16 @@ export async function getMongoClient() {
   }
 
   const client = new MongoClient(uri, {
-    maxPoolSize: 10,
-    minPoolSize: 2,
-    maxIdleTimeMS: 60000,
-    serverSelectionTimeoutMS: 5000,
-    socketTimeoutMS: 45000,
+    maxPoolSize: 5,           // Reduced for serverless
+    minPoolSize: 1,           // Minimal for cold starts
+    maxIdleTimeMS: 30000,     // 30s idle timeout
+    serverSelectionTimeoutMS: 3000,  // Faster timeout
+    socketTimeoutMS: 30000,   // 30s socket timeout
+    connectTimeoutMS: 3000,   // Fast connection timeout
+    retryWrites: true,
+    retryReads: true,
   })
-  
+
   await client.connect()
   cachedClient = client
   return client
@@ -36,7 +39,7 @@ export async function getDb() {
   const client = await getMongoClient()
   const db = client.db()
   cachedDb = db
-  
+
   // Create indexes on first connection (non-blocking)
   if (!indexesCreated) {
     indexesCreated = true
@@ -46,11 +49,11 @@ export async function getDb() {
         // Create indexes for Category collection
         await db.collection('Category').createIndex({ isActive: 1, order: 1, priority: 1 })
         await db.collection('Category').createIndex({ slug: 1 })
-        
+
         // Create indexes for Product collection
         await db.collection('Product').createIndex({ categoryId: 1, isActive: 1 })
         await db.collection('Product').createIndex({ isFeatured: 1, isActive: 1 })
-        
+
         console.log('Database indexes created successfully')
       } catch (error) {
         console.error('Error creating indexes:', error)
@@ -58,6 +61,6 @@ export async function getDb() {
       }
     })
   }
-  
+
   return db
 }
