@@ -3,12 +3,15 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { MapPin, Plus, Trash2, Home, Briefcase, Building } from 'lucide-react'
+import { MapPin, Plus, Trash2, Home, Briefcase, Building, Phone, User } from 'lucide-react'
 
 interface Address {
     id: string
-    type: string
-    address: string
+    label: string
+    name: string
+    phone: string
+    street: string
+    landmark?: string
     city: string
     pincode: string
     isDefault: boolean
@@ -57,8 +60,8 @@ export default function AddressesPage() {
         }
     }
 
-    const getTypeIcon = (type: string) => {
-        switch (type?.toLowerCase()) {
+    const getTypeIcon = (label: string) => {
+        switch (label?.toLowerCase()) {
             case 'home': return <Home className="w-5 h-5" />
             case 'work': return <Briefcase className="w-5 h-5" />
             default: return <Building className="w-5 h-5" />
@@ -117,22 +120,41 @@ export default function AddressesPage() {
                         {addresses.map((address) => (
                             <div key={address.id} className="bg-white rounded-xl shadow-sm p-4">
                                 <div className="flex items-start gap-4">
-                                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600">
-                                        {getTypeIcon(address.type)}
+                                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600 flex-shrink-0">
+                                        {getTypeIcon(address.label)}
                                     </div>
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className="font-semibold text-gray-900 capitalize">{address.type || 'Other'}</span>
+                                    <div className="flex-1 min-w-0">
+                                        {/* Label and Default Badge */}
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="font-bold text-gray-900 text-lg">{address.label || 'Other'}</span>
                                             {address.isDefault && (
-                                                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Default</span>
+                                                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">Default</span>
                                             )}
                                         </div>
-                                        <p className="text-gray-600 text-sm">{address.address}</p>
+
+                                        {/* Name */}
+                                        <div className="flex items-center gap-2 text-gray-800 mb-1">
+                                            <User className="w-4 h-4 text-gray-400" />
+                                            <span className="font-medium">{address.name}</span>
+                                        </div>
+
+                                        {/* Phone */}
+                                        <div className="flex items-center gap-2 text-gray-600 mb-2">
+                                            <Phone className="w-4 h-4 text-gray-400" />
+                                            <span>{address.phone}</span>
+                                        </div>
+
+                                        {/* Address */}
+                                        <p className="text-gray-600 text-sm leading-relaxed">
+                                            {address.street}
+                                            {address.landmark && `, ${address.landmark}`}
+                                        </p>
                                         <p className="text-gray-500 text-sm">{address.city} - {address.pincode}</p>
                                     </div>
+
                                     <button
                                         onClick={() => deleteAddress(address.id)}
-                                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+                                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition flex-shrink-0"
                                     >
                                         <Trash2 className="w-5 h-5" />
                                     </button>

@@ -67,11 +67,13 @@ model Address {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   userId    String   @db.ObjectId
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  label     String
-  street    String
+  label     String   // Home, Work, Other
+  name      String   // Recipient name
+  phone     String   // Contact number
+  street    String   // Full address
   landmark  String?
   city      String
-  state     String
+  state     String   @default("Delhi")
   pincode   String
   country   String   @default("India")
   isDefault Boolean  @default(false)
@@ -80,6 +82,7 @@ model Address {
 
   @@index([userId])  // User's addresses lookup
 }
+
 
 model Category {
   id          String    @id @default(auto()) @map("_id") @db.ObjectId

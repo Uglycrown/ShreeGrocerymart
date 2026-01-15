@@ -27,9 +27,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { userId, label, street, landmark, city, pincode, isDefault } = body
+    const { userId, label, name, phone, street, landmark, city, pincode, isDefault } = body
 
-    if (!userId || !street || !city || !pincode) {
+    if (!userId || !name || !phone || !street || !city || !pincode) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 })
     }
 
@@ -53,8 +53,10 @@ export async function POST(request: Request) {
       data: {
         userId,
         label: label || 'Home',
+        name,
+        phone,
         street,
-        landmark,
+        landmark: landmark || '',
         city,
         state: 'Delhi',
         pincode,

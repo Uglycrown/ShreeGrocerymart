@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { MapPin, Home, Briefcase, Building, ArrowLeft } from 'lucide-react'
+import { MapPin, Home, Briefcase, Building, ArrowLeft, User, Phone } from 'lucide-react'
 
 export default function AddAddressPage() {
     const router = useRouter()
@@ -12,7 +12,10 @@ export default function AddAddressPage() {
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
         type: 'home',
+        name: '',
+        phone: '',
         address: '',
+        landmark: '',
         city: '',
         pincode: '',
         isDefault: false,
@@ -21,9 +24,20 @@ export default function AddAddressPage() {
     useEffect(() => {
         const storedUser = localStorage.getItem('user')
         if (storedUser) {
-            setUser(JSON.parse(storedUser))
+            const userData = JSON.parse(storedUser)
+            setUser(userData)
+            // Pre-fill name and phone from user data
+            setFormData(prev => ({
+                ...prev,
+                name: userData.name || '',
+                phone: userData.phoneNumber || userData.phone || '',
+            }))
         } else if (status === 'authenticated' && session?.user) {
             setUser(session.user)
+            setFormData(prev => ({
+                ...prev,
+                name: session.user?.name || '',
+            }))
         } else if (status === 'unauthenticated' && !storedUser) {
             router.push('/login')
         }
@@ -32,8 +46,18 @@ export default function AddAddressPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        if (!formData.address || !formData.city || !formData.pincode) {
-            alert('Please fill all fields')
+        if (!formData.name || !formData.phone || !formData.address || !formData.city || !formData.pincode) {
+            alert('Please fill all required fields')
+            return
+        }
+
+        if (formData.phone.length !== 10) {
+            alert('Please enter a valid 10-digit phone number')
+            return
+        }
+
+        if (formData.pincode.length !== 6) {
+            alert('Please enter a valid 6-digit pincode')
             return
         }
 
@@ -46,7 +70,10 @@ export default function AddAddressPage() {
                 body: JSON.stringify({
                     userId,
                     label: formData.type.charAt(0).toUpperCase() + formData.type.slice(1),
+                    name: formData.name,
+                    phone: formData.phone,
                     street: formData.address,
+                    landmark: formData.landmark,
                     city: formData.city,
                     pincode: formData.pincode,
                     isDefault: formData.isDefault,
@@ -56,7 +83,8 @@ export default function AddAddressPage() {
             if (response.ok) {
                 router.push('/addresses')
             } else {
-                alert('Failed to save address')
+                const error = await response.json()
+                alert(error.message || 'Failed to save address')
             }
         } catch (error) {
             console.error('Error saving address:', error)
@@ -109,8 +137,8 @@ export default function AddAddressPage() {
                                         type="button"
                                         onClick={() => setFormData({ ...formData, type: type.value })}
                                         className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg border-2 transition ${formData.type === type.value
-                                            ? 'border-green-600 bg-green-50 text-green-700'
-                                            : 'border-gray-200 hover:border-gray-300'
+                                                ? 'border-green-600 bg-green-50 text-green-700'
+                                                : 'border-gray-200 hover:border-gray-300'
                                             }`}
                                     >
                                         <Icon className="w-5 h-5" />
@@ -121,50 +149,111 @@ export default function AddAddressPage() {
                         </div>
                     </div>
 
-                    {/* Address */}
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Full Address *
-                        </label>
-                        <textarea
-                            value={formData.address}
-                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                            placeholder="House/Flat No., Building, Street, Area"
-                            rows={3}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
-                            required
-                        />
-                    </div>
-
-                    {/* City */}
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            City *
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.city}
-                            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                            placeholder="Enter city"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                            required
-                        />
-                    </div>
-
-                    {/* Pincode */}
+                    {/* Contact Details */}
                     <div className="mb-6">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Pincode *
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.pincode}
-                            onChange={(e) => setFormData({ ...formData, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
-                            placeholder="6-digit pincode"
-                            maxLength={6}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                            required
-                        />
+                        <h3 className="text-sm font-semibold text-gray-500 uppercase mb-3">Contact Details</h3>
+
+                        {/* Name */}
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Full Name *
+                            </label>
+                            <div className="relative">
+                                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <input
+                                    type="text"
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    placeholder="Recipient's full name"
+                                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        {/* Phone */}
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Phone Number *
+                            </label>
+                            <div className="relative">
+                                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <input
+                                    type="tel"
+                                    value={formData.phone}
+                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                                    placeholder="10-digit mobile number"
+                                    maxLength={10}
+                                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    required
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Address Details */}
+                    <div className="mb-6">
+                        <h3 className="text-sm font-semibold text-gray-500 uppercase mb-3">Address Details</h3>
+
+                        {/* Full Address */}
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Full Address *
+                            </label>
+                            <textarea
+                                value={formData.address}
+                                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                placeholder="House/Flat No., Building Name, Street, Area"
+                                rows={3}
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
+                                required
+                            />
+                        </div>
+
+                        {/* Landmark */}
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Landmark (Optional)
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.landmark}
+                                onChange={(e) => setFormData({ ...formData, landmark: e.target.value })}
+                                placeholder="Near metro station, temple, etc."
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                            />
+                        </div>
+
+                        {/* City and Pincode */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    City *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.city}
+                                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                                    placeholder="City"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Pincode *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.pincode}
+                                    onChange={(e) => setFormData({ ...formData, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                                    placeholder="6 digits"
+                                    maxLength={6}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                    required
+                                />
+                            </div>
+                        </div>
                     </div>
 
                     {/* Default Checkbox */}

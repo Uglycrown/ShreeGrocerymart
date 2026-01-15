@@ -13,12 +13,12 @@ export default function CheckoutClientPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const addressIdParam = searchParams.get('addressId')
-  
+
   const { data: session, status } = useSession()
   const { items, getTotal, getItemsCount, clearCart } = useCartStore()
   const [isProcessing, setIsProcessing] = useState(false)
   const [mounted, setMounted] = useState(false)
-  
+
   const [savedAddresses, setSavedAddresses] = useState<any[]>([])
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null)
 
@@ -34,14 +34,14 @@ export default function CheckoutClientPage() {
     email: '',
     address: '',
     landmark: '',
-    city: 'New Delhi', 
+    city: 'New Delhi',
     pincode: '',
     instructions: '',
   })
 
   useEffect(() => {
     setMounted(true)
-    
+
     const storedUser = localStorage.getItem('user')
     const userPhone = localStorage.getItem('userPhone')
 
@@ -80,13 +80,13 @@ export default function CheckoutClientPage() {
       if (res.ok) {
         const data = await res.json()
         setSavedAddresses(data)
-        
+
         let selectedAddr = null
-        
+
         if (addressIdParam) {
           selectedAddr = data.find((a: any) => a.id === addressIdParam)
         }
-        
+
         if (!selectedAddr && data.length > 0) {
           selectedAddr = data.find((a: any) => a.isDefault) || data[0]
         }
@@ -95,14 +95,13 @@ export default function CheckoutClientPage() {
           setSelectedAddressId(selectedAddr.id)
           setFormData(prev => ({
             ...prev,
+            name: selectedAddr.name || prev.name,
+            phone: selectedAddr.phone || prev.phone,
             address: selectedAddr.street,
             landmark: selectedAddr.landmark || '',
             city: selectedAddr.city,
             pincode: selectedAddr.pincode
           }))
-        } else {
-            // No address selected or found, redirect to address selection
-            // router.push('/checkout/address')
         }
       }
     } catch (err) {
@@ -243,14 +242,14 @@ export default function CheckoutClientPage() {
                     <h2 className="text-xl font-semibold text-gray-900">Contact Details</h2>
                   </div>
                   <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
-                        <input type="text" name="name" value={formData.name} onChange={handleChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="John Doe" />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
-                        <input type="tel" name="phone" value={formData.phone} onChange={handleChange} required pattern="[0-9]{10}" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="9876543210" />
-                      </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                      <input type="text" name="name" value={formData.name} onChange={handleChange} required className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="John Doe" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
+                      <input type="tel" name="phone" value={formData.phone} onChange={handleChange} required pattern="[0-9]{10}" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="9876543210" />
+                    </div>
                   </div>
                 </div>
 
@@ -266,15 +265,25 @@ export default function CheckoutClientPage() {
                   {formData.address ? (
                     <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                       <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-bold text-gray-900">{formData.address.split(',')[0]}</p>
-                          <p className="text-sm text-gray-600 truncate max-w-md">
-                            {formData.landmark ? `${formData.landmark}, ` : ''}{formData.address}, {formData.pincode}
+                        <div className="flex-1 min-w-0">
+                          {/* Selected Address Label */}
+                          {savedAddresses.find(a => a.id === selectedAddressId)?.label && (
+                            <span className="inline-flex items-center gap-1 text-xs font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full mb-2">
+                              {savedAddresses.find(a => a.id === selectedAddressId)?.label}
+                            </span>
+                          )}
+                          {/* Name and Phone */}
+                          <p className="font-bold text-gray-900">{formData.name}</p>
+                          <p className="text-sm text-gray-600">{formData.phone}</p>
+                          {/* Short Address */}
+                          <p className="text-sm text-gray-500 mt-1 line-clamp-1">
+                            {formData.address.length > 40 ? formData.address.substring(0, 40) + '...' : formData.address}
                           </p>
+                          <p className="text-xs text-gray-400">{formData.city} - {formData.pincode}</p>
                         </div>
-                        <Link 
+                        <Link
                           href="/checkout/address"
-                          className="bg-white text-green-600 border border-green-600 px-3 py-1 rounded text-xs font-bold hover:bg-green-50 transition"
+                          className="bg-white text-green-600 border border-green-600 px-3 py-1.5 rounded text-xs font-bold hover:bg-green-50 transition flex-shrink-0 ml-4"
                         >
                           CHANGE
                         </Link>
@@ -283,7 +292,7 @@ export default function CheckoutClientPage() {
                   ) : (
                     <div className="text-center py-6 border-2 border-dashed border-gray-300 rounded-lg">
                       <p className="text-gray-500 mb-4">No address selected</p>
-                      <Link 
+                      <Link
                         href="/checkout/address"
                         className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-green-700 transition"
                       >
@@ -320,7 +329,7 @@ export default function CheckoutClientPage() {
             <div className="lg:col-span-1">
               <div className="bg-white rounded-lg shadow-md p-6 sticky top-24">
                 <h2 className="text-xl font-semibold mb-4 text-gray-900">Order Summary</h2>
-                
+
                 <div className="bg-green-50 rounded-lg p-3 mb-4 flex items-center gap-2">
                   <Clock className="w-5 h-5 text-green-700" />
                   <div>
