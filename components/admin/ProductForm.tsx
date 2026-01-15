@@ -86,7 +86,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
-        
+
         // Validate file type
         if (!file.type.startsWith('image/')) {
           alert(`${file.name} is not an image file`)
@@ -99,17 +99,31 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
           continue
         }
 
-        // Convert to base64
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          const base64String = reader.result as string
-          addImage(base64String)
+        // Convert to base64 first
+        const base64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader()
+          reader.onloadend = () => resolve(reader.result as string)
+          reader.readAsDataURL(file)
+        })
+
+        // Upload to Cloudinary
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: base64, folder: 'products' }),
+        })
+
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.message || 'Upload failed')
         }
-        reader.readAsDataURL(file)
+
+        const result = await response.json()
+        addImage(result.url)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading image:', error)
-      alert('Failed to upload image')
+      alert(`Failed to upload image: ${error.message}`)
     } finally {
       setUploading(false)
     }
@@ -233,10 +247,10 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
         <div className="grid grid-cols-4 gap-4 mb-4">
           {formData.images.map((img, index) => (
             <div key={index} className="relative aspect-square border rounded-lg overflow-hidden">
-              <Image 
-                src={img} 
-                alt={`Product ${index + 1}`} 
-                fill 
+              <Image
+                src={img}
+                alt={`Product ${index + 1}`}
+                fill
                 className="object-cover"
                 unoptimized={img.startsWith('data:')}
               />
@@ -250,7 +264,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
             </div>
           ))}
         </div>
-        
+
         {/* Upload from device */}
         <div className="mb-4">
           <label className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-green-500 transition">
