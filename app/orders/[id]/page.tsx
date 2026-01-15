@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { CheckCircle, MapPin, Phone, FileText, XCircle, Clock, Package, Truck } from 'lucide-react'
+import { CheckCircle, MapPin, Phone, FileText, XCircle, Clock, Package, Truck, RefreshCw } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 
 interface Order {
@@ -24,10 +24,42 @@ interface Order {
 export default function OrderPage() {
   const params = useParams()
   const [order, setOrder] = useState<Order | null>(null)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
+  // Fetch order data
+  const fetchOrder = useCallback(async (showRefresh = false) => {
+    if (showRefresh) setIsRefreshing(true)
+    try {
+      const response = await fetch(`/api/orders/${params.id}`)
+      if (response.ok) {
+        const data = await response.json()
+        // Check if status changed (for visual feedback)
+        if (order && order.status !== data.status) {
+          // Status changed! Could trigger a notification sound or animation
+          console.log('📱 Order status updated:', data.status)
+        }
+        setOrder(data)
+        setLastUpdated(new Date())
+      }
+    } catch (error) {
+      console.error('Error fetching order:', error)
+    } finally {
+      setIsRefreshing(false)
+    }
+  }, [params.id, order])
+
+  // Initial fetch and polling
   useEffect(() => {
-    fetch(`/api/orders/${params.id}`).then(r => r.json()).then(setOrder).catch(() => {})
-  }, [params.id])
+    fetchOrder()
+
+    // Poll every 5 seconds for real-time updates
+    const pollInterval = setInterval(() => {
+      fetchOrder()
+    }, 5000)
+
+    return () => clearInterval(pollInterval)
+  }, [params.id]) // Don't include fetchOrder to avoid infinite loop
 
   const getStatusBadge = (status: string) => {
     const styles: any = {
@@ -87,8 +119,8 @@ export default function OrderPage() {
             <span className="font-bold text-gray-900">{order.orderNumber}</span>
           </div>
           <div className="flex gap-3 justify-center mt-4">
-            <a 
-              href={`/api/orders/${params.id}/invoice`} 
+            <a
+              href={`/api/orders/${params.id}/invoice`}
               target="_blank"
               className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-lg font-semibold transition"
             >
@@ -107,8 +139,29 @@ export default function OrderPage() {
           </div>
         </div>
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 className="text-xl font-bold mb-4 text-gray-900">Order Status</h2>
-          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold ${getStatusBadge(order.status)}`}>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-gray-900">Order Status</h2>
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
+              <span>Live updates</span>
+              {lastUpdated && (
+                <span className="text-gray-400">
+                  · Updated {new Date(lastUpdated).toLocaleTimeString()}
+                </span>
+              )}
+              <button
+                onClick={() => fetchOrder(true)}
+                className={`ml-2 p-1 rounded hover:bg-gray-100 ${isRefreshing ? 'animate-spin' : ''}`}
+                title="Refresh now"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all duration-500 ${getStatusBadge(order.status)}`}>
             {getStatusIcon(order.status)}
             <span>{order.status.replace('_', ' ').toUpperCase()}</span>
           </div>
