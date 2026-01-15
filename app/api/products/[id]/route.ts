@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/mongodb'
 import { ObjectId } from 'mongodb'
+import { serverCache } from '@/lib/server-cache'
 
 async function updateProduct(request: NextRequest, id: string) {
   const body = await request.json()
@@ -31,10 +32,13 @@ async function updateProduct(request: NextRequest, id: string) {
   const result = await db.collection('Product').updateOne({ _id: new ObjectId(id) }, { $set: updateData })
   if (result.matchedCount === 0) return NextResponse.json({ error: 'Product not found' }, { status: 404 })
   const product = await db.collection('Product').findOne({ _id: new ObjectId(id) })
-  
+
   if (!product) {
     return NextResponse.json({ error: 'Product not found after update' }, { status: 404 })
   }
+
+  // Invalidate all product caches to ensure fresh data
+  serverCache.invalidatePattern('products:')
 
   return NextResponse.json({ ...product, id: product._id.toString() })
 }
@@ -63,6 +67,10 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const db = await getDb()
     const result = await db.collection('Product').deleteOne({ _id: new ObjectId(id) })
     if (result.deletedCount === 0) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+    // Invalidate all product caches
+    serverCache.invalidatePattern('products:')
+
     return NextResponse.json({ message: 'Product deleted' })
   } catch (error) {
     return NextResponse.json({ error: 'Failed to delete' }, { status: 500 })

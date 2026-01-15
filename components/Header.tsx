@@ -531,7 +531,11 @@ export default function Header() {
                     >
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center group-hover:bg-green-600 transition-colors flex-shrink-0 ${isActive ? 'bg-green-600' : 'bg-green-100'
                         }`}>
-                        <img src={category.image} alt={category.name} className="w-10 h-10 rounded-full object-cover" />
+                        {category.image ? (
+                          <img src={category.image} alt={category.name} className="w-10 h-10 rounded-full object-cover" />
+                        ) : (
+                          <img src="/placeholder-product.svg" alt={category.name} className="w-10 h-10 rounded-full object-cover" />
+                        )}
                       </div>
                       <span className={`text-[10px] md:text-xs font-medium group-hover:text-green-600 transition-colors text-center leading-tight w-full break-words ${isActive ? 'text-green-600 font-semibold' : 'text-gray-700'
                         }`}>

@@ -93,7 +93,7 @@ export default function ProductPage() {
       productId: product.id,
       name: product.name,
       price: product.price,
-      image: product.images[0],
+      image: product.images?.[0] || '/placeholder-product.svg',
       unit: product.unit,
       quantity: 1,
       deliveryTime: product.deliveryTime || 10,
@@ -110,7 +110,7 @@ export default function ProductPage() {
         id: product.id,
         name: product.name,
         price: product.price,
-        image: product.images[0],
+        image: product.images?.[0] || '/placeholder-product.svg',
         unit: product.unit,
       })
     }
@@ -212,13 +212,22 @@ export default function ProductPage() {
             {/* Main Image */}
             <div className="bg-white rounded-lg shadow-md p-4 mb-4">
               <div className="relative aspect-square">
-                <Image
-                  src={product.images[selectedImage]}
-                  alt={product.name}
-                  fill
-                  className="object-contain"
-                  unoptimized={product.images[selectedImage].startsWith('data:')}
-                />
+                {product.images?.[selectedImage] ? (
+                  <Image
+                    src={product.images[selectedImage]}
+                    alt={product.name}
+                    fill
+                    className="object-contain"
+                    unoptimized={product.images[selectedImage].startsWith('data:')}
+                  />
+                ) : (
+                  <Image
+                    src="/placeholder-product.svg"
+                    alt={product.name}
+                    fill
+                    className="object-contain"
+                  />
+                )}
 
                 {product.images.length > 1 && (
                   <>
@@ -365,8 +374,8 @@ export default function ProductPage() {
               <button
                 onClick={handleWishlistToggle}
                 className={`relative border-2 p-4 rounded-lg transition ${inWishlist
-                    ? 'bg-red-50 border-red-500 text-red-500'
-                    : 'bg-white border-gray-300 hover:border-red-500 hover:text-red-500'
+                  ? 'bg-red-50 border-red-500 text-red-500'
+                  : 'bg-white border-gray-300 hover:border-red-500 hover:text-red-500'
                   }`}
               >
                 <Heart className={`w-6 h-6 ${inWishlist ? 'fill-current' : ''}`} />
@@ -405,13 +414,22 @@ export default function ProductPage() {
                     className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition"
                   >
                     <div className="relative aspect-square">
-                      <Image
-                        src={relatedProduct.images[0]}
-                        alt={relatedProduct.name}
-                        fill
-                        className="object-cover"
-                        unoptimized={relatedProduct.images[0].startsWith('data:')}
-                      />
+                      {relatedProduct.images?.[0] ? (
+                        <Image
+                          src={relatedProduct.images[0]}
+                          alt={relatedProduct.name}
+                          fill
+                          className="object-cover"
+                          unoptimized={relatedProduct.images[0].startsWith('data:')}
+                        />
+                      ) : (
+                        <Image
+                          src="/placeholder-product.svg"
+                          alt={relatedProduct.name}
+                          fill
+                          className="object-cover"
+                        />
+                      )}
                     </div>
                     <div className="p-3">
                       <h3 className="font-semibold text-sm text-gray-900 mb-1 line-clamp-2">

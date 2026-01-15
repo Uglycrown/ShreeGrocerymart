@@ -66,14 +66,14 @@ export default function ProductCard({
   const discount = originalPrice ? calculateDiscount(originalPrice, price) : 0
 
   return (
-    <div 
+    <div
       onClick={handleCardClick}
       className="bg-white rounded-lg border border-gray-200 p-2 sm:p-3 md:p-4 hover:shadow-lg transition-shadow cursor-pointer"
     >
       {/* Product Image */}
       <div className="relative aspect-square mb-1.5 sm:mb-2 md:mb-3">
         <Image
-          src={image || '/placeholder.png'}
+          src={image || '/placeholder-product.svg'}
           alt={name}
           fill
           className="object-cover rounded"
@@ -93,7 +93,7 @@ export default function ProductCard({
       <div className="space-y-1 sm:space-y-1.5 md:space-y-2">
         <h3 className="font-semibold text-xs sm:text-sm line-clamp-2 text-gray-900 leading-tight">{name}</h3>
         <p className="text-[10px] sm:text-xs text-gray-600">{unit}</p>
-        
+
         {/* Price and Add Button */}
         <div className="flex items-center justify-between gap-1.5 sm:gap-2 md:gap-3">
           <div className="flex flex-col">

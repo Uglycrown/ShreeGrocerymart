@@ -84,7 +84,7 @@ export default function Home() {
               >
                 <div className="relative h-48">
                   <Image
-                    src={banner.image || '/placeholder.png'}
+                    src={banner.image || '/placeholder-product.svg'}
                     alt={banner.title}
                     fill
                     className="object-cover"
@@ -115,16 +115,14 @@ export default function Home() {
               href={`/category/${category.slug}`}
               className="bg-white rounded-lg p-2 sm:p-3 md:p-4 text-center hover:shadow-lg transition-shadow"
             >
-              {category.image && (
-                <div className="relative w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto mb-1.5 sm:mb-2 md:mb-3">
-                  <Image
-                    src={category.image}
-                    alt={category.name}
-                    fill
-                    className="object-cover rounded-full"
-                  />
-                </div>
-              )}
+              <div className="relative w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto mb-1.5 sm:mb-2 md:mb-3">
+                <Image
+                  src={category.image || '/placeholder-product.svg'}
+                  alt={category.name}
+                  fill
+                  className="object-cover rounded-full"
+                />
+              </div>
               <h3 className="font-semibold text-[10px] sm:text-xs md:text-sm text-gray-900 line-clamp-2">{category.name}</h3>
             </Link>
           ))}
