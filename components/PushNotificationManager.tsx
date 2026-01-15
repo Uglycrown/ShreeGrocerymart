@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { Bell, BellOff, X } from 'lucide-react'
+import { Bell, X } from 'lucide-react'
 
 interface PushNotificationProps {
     userId?: string
@@ -9,21 +9,19 @@ interface PushNotificationProps {
 
 export default function PushNotificationManager({ userId }: PushNotificationProps) {
     const [permission, setPermission] = useState<NotificationPermission>('default')
-    const [isSubscribed, setIsSubscribed] = useState(false)
     const [showPrompt, setShowPrompt] = useState(false)
     const [isSupported, setIsSupported] = useState(false)
 
     useEffect(() => {
-        // Check if push notifications are supported
-        const supported = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window
+        // Check if notifications are supported
+        const supported = 'Notification' in window
         setIsSupported(supported)
 
         if (supported) {
             setPermission(Notification.permission)
-            checkSubscription()
         }
 
-        // Show prompt after delay if not subscribed and not dismissed
+        // Show prompt after delay if not granted and not dismissed
         const hasPromptDismissed = localStorage.getItem('push-prompt-dismissed')
         if (!hasPromptDismissed && supported && Notification.permission === 'default') {
             const timer = setTimeout(() => setShowPrompt(true), 5000)
@@ -31,87 +29,27 @@ export default function PushNotificationManager({ userId }: PushNotificationProp
         }
     }, [])
 
-    const checkSubscription = async () => {
+    const requestPermission = useCallback(async () => {
         try {
-            const registration = await navigator.serviceWorker.ready
-            const subscription = await registration.pushManager.getSubscription()
-            setIsSubscribed(!!subscription)
-        } catch (error) {
-            console.error('Error checking subscription:', error)
-        }
-    }
-
-    const subscribe = useCallback(async () => {
-        try {
-            // Request permission first
             const result = await Notification.requestPermission()
             setPermission(result)
 
-            if (result !== 'granted') {
-                console.log('Notification permission denied')
-                return false
-            }
+            if (result === 'granted') {
+                setShowPrompt(false)
 
-            // Get service worker registration
-            const registration = await navigator.serviceWorker.ready
-
-            // Subscribe to push notifications
-            // Note: In production, you'd use VAPID keys here
-            const subscription = await registration.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(
-                    // This is a placeholder VAPID public key - in production, generate your own
-                    'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U'
-                ),
-            })
-
-            // Save subscription to server
-            await fetch('/api/push/subscribe', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    subscription: subscription.toJSON(),
-                    userId,
-                }),
-            })
-
-            setIsSubscribed(true)
-            setShowPrompt(false)
-
-            // Show success notification
-            new Notification('🔔 Notifications Enabled!', {
-                body: 'You will now receive updates about your orders.',
-                icon: '/icons/icon-192x192.png',
-            })
-
-            return true
-        } catch (error) {
-            console.error('Error subscribing to push:', error)
-            return false
-        }
-    }, [userId])
-
-    const unsubscribe = async () => {
-        try {
-            const registration = await navigator.serviceWorker.ready
-            const subscription = await registration.pushManager.getSubscription()
-
-            if (subscription) {
-                // Remove from server
-                await fetch('/api/push/subscribe', {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ endpoint: subscription.endpoint }),
+                // Show success notification
+                new Notification('🔔 Notifications Enabled!', {
+                    body: 'You will now receive updates about your orders.',
+                    icon: '/icons/icon-192x192.png',
                 })
 
-                // Unsubscribe locally
-                await subscription.unsubscribe()
-                setIsSubscribed(false)
+                // Save preference
+                localStorage.setItem('notifications-enabled', 'true')
             }
         } catch (error) {
-            console.error('Error unsubscribing:', error)
+            console.error('Error requesting notification permission:', error)
         }
-    }
+    }, [])
 
     const dismissPrompt = () => {
         setShowPrompt(false)
@@ -149,7 +87,7 @@ export default function PushNotificationManager({ userId }: PushNotificationProp
                     </div>
 
                     <button
-                        onClick={subscribe}
+                        onClick={requestPermission}
                         className="w-full mt-3 bg-blue-600 text-white py-2.5 rounded-lg font-semibold text-sm hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
                     >
                         <Bell className="w-4 h-4" />
@@ -163,14 +101,3 @@ export default function PushNotificationManager({ userId }: PushNotificationProp
     return null
 }
 
-// Helper function to convert VAPID key
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
-    const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
-    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
-    const rawData = window.atob(base64)
-    const outputArray = new Uint8Array(rawData.length)
-    for (let i = 0; i < rawData.length; ++i) {
-        outputArray[i] = rawData.charCodeAt(i)
-    }
-    return outputArray
-}
