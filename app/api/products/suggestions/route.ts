@@ -29,14 +29,14 @@ export async function GET(request: NextRequest) {
     const sortedProducts = products.sort((a, b) => {
       const aName = a.name.toLowerCase()
       const bName = b.name.toLowerCase()
-      
+
       const aStarts = aName.startsWith(searchTerm)
       const bStarts = bName.startsWith(searchTerm)
-      
+
       // Priority 1: Products starting with search term come first
       if (aStarts && !bStarts) return -1
       if (!aStarts && bStarts) return 1
-      
+
       // Priority 2: If both start or both don't start, sort alphabetically
       return aName.localeCompare(bName)
     })
@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
     const suggestions = sortedProducts.slice(0, 10).map(product => ({
       id: product._id.toString(),
       name: product.name,
+      slug: product.slug,
       images: product.images,
       price: product.price,
       unit: product.unit,

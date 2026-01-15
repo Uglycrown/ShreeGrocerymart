@@ -49,18 +49,20 @@ export default function ProductPage() {
 
   const fetchProduct = async (slug: string) => {
     try {
-      // First try to fetch by searching product name
-      const searchTerm = slug.replace(/-/g, ' ')
       const res = await fetch(`/api/products`)
       const data = await res.json()
-      
-      // Find product by matching slug or name
+
+      // Find product by EXACT slug match
       const foundProduct = data.find((p: any) => {
+        // Use the product's actual slug field if it exists
+        if (p.slug) {
+          return p.slug === slug
+        }
+        // Fallback: generate slug from name and compare
         const productSlug = p.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
-        const searchSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '')
-        return productSlug === searchSlug || p.name.toLowerCase().includes(searchTerm.toLowerCase())
+        return productSlug === slug
       })
-      
+
       if (foundProduct) {
         setProduct(foundProduct)
         if (foundProduct.category?.id) {
@@ -100,7 +102,7 @@ export default function ProductPage() {
 
   const handleWishlistToggle = () => {
     if (!product) return
-    
+
     if (inWishlist) {
       removeFromWishlist(product.id)
     } else {
@@ -116,10 +118,10 @@ export default function ProductPage() {
 
   const handleShare = async () => {
     if (!product) return
-    
+
     const url = window.location.href
     const text = `Check out ${product.name} on Shree Grocery Mart!`
-    
+
     // Try native share API first
     if (navigator.share) {
       try {
@@ -217,7 +219,7 @@ export default function ProductPage() {
                   className="object-contain"
                   unoptimized={product.images[selectedImage].startsWith('data:')}
                 />
-                
+
                 {product.images.length > 1 && (
                   <>
                     <button
@@ -250,9 +252,8 @@ export default function ProductPage() {
                   <button
                     key={idx}
                     onClick={() => setSelectedImage(idx)}
-                    className={`relative aspect-square border-2 rounded-lg overflow-hidden ${
-                      selectedImage === idx ? 'border-green-600' : 'border-gray-200'
-                    }`}
+                    className={`relative aspect-square border-2 rounded-lg overflow-hidden ${selectedImage === idx ? 'border-green-600' : 'border-gray-200'
+                      }`}
                   >
                     <Image
                       src={img}
@@ -270,7 +271,7 @@ export default function ProductPage() {
           {/* Product Info */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
-            
+
             <div className="flex items-center gap-3 mb-4">
               <span className="text-gray-600">{product.unit}</span>
               <span className="text-gray-300">|</span>
@@ -360,19 +361,18 @@ export default function ProductPage() {
                   Add to Cart
                 </button>
               )}
-              
-              <button 
+
+              <button
                 onClick={handleWishlistToggle}
-                className={`relative border-2 p-4 rounded-lg transition ${
-                  inWishlist 
-                    ? 'bg-red-50 border-red-500 text-red-500' 
+                className={`relative border-2 p-4 rounded-lg transition ${inWishlist
+                    ? 'bg-red-50 border-red-500 text-red-500'
                     : 'bg-white border-gray-300 hover:border-red-500 hover:text-red-500'
-                }`}
+                  }`}
               >
                 <Heart className={`w-6 h-6 ${inWishlist ? 'fill-current' : ''}`} />
               </button>
-              
-              <button 
+
+              <button
                 onClick={handleShare}
                 className="relative bg-white border-2 border-gray-300 p-4 rounded-lg hover:border-green-600 hover:text-green-600 transition"
               >

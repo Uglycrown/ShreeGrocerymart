@@ -12,6 +12,7 @@ import { useSession, signOut } from 'next-auth/react'
 interface Product {
   id: string;
   name: string;
+  slug?: string;
   unit: string;
   price: number;
   images: string[];
@@ -190,10 +191,12 @@ export default function Header() {
     }
   }
 
-  const handleSuggestionClick = (productName: string) => {
-    setSearchQuery(productName)
+  const handleSuggestionClick = (product: Product) => {
+    setSearchQuery('')
     setShowSuggestions(false)
-    router.push(`/search?q=${encodeURIComponent(productName)}`)
+    // Use slug if available, otherwise generate from name
+    const productSlug = product.slug || product.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+    router.push(`/product/${productSlug}`)
   }
 
   const highlightMatch = (text: string, query: string) => {
@@ -322,8 +325,11 @@ export default function Header() {
                     <button
                       key={product.id}
                       type="button"
-                      onClick={() => handleSuggestionClick(product.name)}
-                      className="w-full flex items-center gap-3 p-3 hover:bg-green-50 text-left border-b border-gray-100 last:border-b-0 transition-colors"
+                      onMouseDown={(e) => {
+                        e.preventDefault()
+                        handleSuggestionClick(product)
+                      }}
+                      className="w-full flex items-center gap-3 p-3 hover:bg-green-50 text-left border-b border-gray-100 last:border-b-0 transition-colors cursor-pointer"
                     >
                       <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                         {product.images && product.images[0] ? (
@@ -464,8 +470,11 @@ export default function Header() {
                     <button
                       key={product.id}
                       type="button"
-                      onClick={() => handleSuggestionClick(product.name)}
-                      className="w-full flex items-center gap-3 p-3 hover:bg-green-50 text-left border-b border-gray-100 last:border-b-0 transition-colors"
+                      onMouseDown={(e) => {
+                        e.preventDefault()
+                        handleSuggestionClick(product)
+                      }}
+                      className="w-full flex items-center gap-3 p-3 hover:bg-green-50 text-left border-b border-gray-100 last:border-b-0 transition-colors cursor-pointer"
                     >
                       <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                         {product.images && product.images[0] ? (
