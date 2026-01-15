@@ -8,6 +8,7 @@ import { useWishlistStore } from '@/lib/wishlist-store'
 import { formatPrice } from '@/lib/utils'
 import { useEffect, useState, useRef } from 'react'
 import { useSession, signOut } from 'next-auth/react'
+import NotificationBell from './NotificationBell'
 
 interface Product {
   id: string;
@@ -415,6 +416,9 @@ export default function Header() {
                 </div>
               )}
             </div>
+
+            {/* Notification Bell - Only show for logged in users */}
+            {user && <NotificationBell userId={user.id || session?.user?.id} />}
 
             <Link href="/wishlist" className="relative text-gray-800 hover:text-gray-900 transition">
               <Heart className="w-6 h-6" />
