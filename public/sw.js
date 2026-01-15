@@ -1,6 +1,6 @@
-const CACHE_NAME = 'shree-grocery-mart-v1';
-const STATIC_CACHE_NAME = 'static-v1';
-const DYNAMIC_CACHE_NAME = 'dynamic-v1';
+const CACHE_NAME = 'shree-grocery-mart-v2';
+const STATIC_CACHE_NAME = 'static-v2';
+const DYNAMIC_CACHE_NAME = 'dynamic-v2';
 
 // Static assets to cache immediately
 const STATIC_ASSETS = [
@@ -14,7 +14,7 @@ const STATIC_ASSETS = [
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
-  console.log('[Service Worker] Installing...');
+  console.log('[Service Worker] Installing v2...');
   event.waitUntil(
     caches.open(STATIC_CACHE_NAME).then((cache) => {
       console.log('[Service Worker] Caching static assets');
@@ -26,12 +26,12 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('[Service Worker] Activating...');
+  console.log('[Service Worker] Activating v2...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter((name) => name !== STATIC_CACHE_NAME && name !== DYNAMIC_CACHE_NAME)
+          .filter((name) => !name.includes('-v2'))
           .map((name) => {
             console.log('[Service Worker] Deleting old cache:', name);
             return caches.delete(name);
@@ -50,8 +50,17 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (request.method !== 'GET') return;
 
-  // Skip API requests (always fetch fresh)
+  // ALWAYS fetch API requests fresh from network (no caching)
   if (url.pathname.startsWith('/api/')) {
+    event.respondWith(
+      fetch(request).catch((error) => {
+        console.error('[SW] API request failed:', error);
+        return new Response(JSON.stringify({ error: 'Network error' }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      })
+    );
     return;
   }
 
