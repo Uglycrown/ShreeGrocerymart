@@ -68,7 +68,7 @@ export default function Header() {
 
   useEffect(() => {
     setMounted(true)
-    
+
     // Check if user is logged in (Local Storage or Session)
     const storedUser = localStorage.getItem('user')
     if (storedUser) {
@@ -94,7 +94,7 @@ export default function Header() {
         console.error('Error fetching categories:', error)
       }
     }
-    
+
     fetchCategories()
 
     const handleClickOutside = (event: MouseEvent) => {
@@ -219,29 +219,29 @@ export default function Header() {
         <div className="absolute top-[12%] left-[48%] text-white text-xl md:text-3xl">🍿</div>
         <div className="absolute top-[6%] left-[72%] text-white text-lg md:text-2xl">🥚</div>
         <div className="absolute top-[10%] left-[89%] text-white text-xl md:text-3xl">🛢️</div>
-        
+
         <div className="absolute top-[25%] left-[8%] text-white text-lg md:text-2xl">🍚</div>
         <div className="absolute top-[28%] left-[35%] text-white text-xl md:text-3xl">🧈</div>
         <div className="absolute top-[22%] left-[60%] text-white text-lg md:text-2xl">🌾</div>
         <div className="absolute top-[27%] left-[82%] text-white text-xl md:text-3xl">💄</div>
-        
+
         <div className="absolute top-[45%] left-[5%] text-white text-xl md:text-3xl">🥤</div>
         <div className="absolute top-[48%] left-[28%] text-white text-lg md:text-2xl">🍶</div>
         <div className="absolute top-[42%] left-[52%] text-white text-xl md:text-3xl">🥜</div>
         <div className="absolute top-[47%] left-[75%] text-white text-lg md:text-2xl">🧴</div>
         <div className="absolute top-[43%] left-[93%] text-white text-xl md:text-3xl">🍞</div>
-        
+
         <div className="absolute top-[65%] left-[12%] text-white text-lg md:text-2xl">☕</div>
         <div className="absolute top-[68%] left-[38%] text-white text-xl md:text-3xl">🫘</div>
         <div className="absolute top-[62%] left-[65%] text-white text-lg md:text-2xl">🥛</div>
         <div className="absolute top-[67%] left-[85%] text-white text-xl md:text-3xl">🧊</div>
-        
+
         <div className="absolute top-[85%] left-[6%] text-white text-xl md:text-3xl">🍵</div>
         <div className="absolute top-[88%] left-[22%] text-white text-lg md:text-2xl">🥫</div>
         <div className="absolute top-[82%] left-[45%] text-white text-xl md:text-3xl">🧂</div>
         <div className="absolute top-[87%] left-[68%] text-white text-lg md:text-2xl">🍯</div>
         <div className="absolute top-[83%] left-[90%] text-white text-xl md:text-3xl">🧼</div>
-        
+
         <div className="absolute top-[15%] left-[15%] text-white text-lg md:text-2xl">🧃</div>
         <div className="absolute top-[18%] left-[92%] text-white text-xl md:text-3xl">🥟</div>
         <div className="absolute top-[35%] left-[18%] text-white text-lg md:text-2xl">🧋</div>
@@ -253,7 +253,7 @@ export default function Header() {
         <div className="absolute top-[34%] left-[44%] text-white text-xl md:text-3xl">🧇</div>
         <div className="absolute top-[54%] left-[8%] text-white text-lg md:text-2xl">🥧</div>
         <div className="absolute top-[74%] left-[78%] text-white text-xl md:text-3xl">🍪</div>
-        
+
         {/* Desktop - Additional 25 icons */}
         <div className="hidden md:block absolute top-[7%] left-[40%] text-white text-2xl">🧊</div>
         <div className="hidden md:block absolute top-[13%] left-[55%] text-white text-3xl">🥛</div>
@@ -281,7 +281,7 @@ export default function Header() {
         <div className="hidden md:block absolute top-[66%] left-[42%] text-white text-3xl">🍞</div>
         <div className="hidden md:block absolute top-[88%] left-[35%] text-white text-2xl">🥣</div>
       </div>
-      
+
       <div className="container mx-auto px-1 relative z-10">
         {/* Desktop Layout */}
         <div className="hidden md:flex items-center justify-between h-20">
@@ -314,23 +314,35 @@ export default function Header() {
                 className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white shadow-sm text-gray-900"
                 autoComplete="off"
               />
-              
+
               {/* Suggestions Dropdown */}
               {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl max-h-96 overflow-y-auto z-50">
                   {suggestions.map((product) => (
                     <button
                       key={product.id}
                       type="button"
                       onClick={() => handleSuggestionClick(product.name)}
-                      className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 text-left border-b last:border-b-0"
+                      className="w-full flex items-center gap-3 p-3 hover:bg-green-50 text-left border-b border-gray-100 last:border-b-0 transition-colors"
                     >
-                      <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                      <div className="flex-1">
-                        <div className="text-sm text-gray-900">{highlightMatch(product.name, searchQuery)}</div>
+                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                        {product.images && product.images[0] ? (
+                          <img
+                            src={product.images[0]}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Search className="w-5 h-5 text-gray-300" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-gray-900 truncate">{highlightMatch(product.name, searchQuery)}</div>
                         <div className="text-xs text-gray-500">{product.unit}</div>
                       </div>
-                      <div className="text-sm font-semibold text-gray-900">{formatPrice(product.price)}</div>
+                      <div className="text-sm font-bold text-green-600">{formatPrice(product.price)}</div>
                     </button>
                   ))}
                 </div>
@@ -342,7 +354,7 @@ export default function Header() {
           <div className="hidden md:flex items-center gap-6">
             <div className="relative" ref={accountRef}>
               {user ? (
-                <div 
+                <div
                   className="flex items-center gap-2 text-gray-800 cursor-pointer hover:text-green-600 transition-colors py-2"
                   onMouseEnter={() => setShowAccountMenu(true)}
                   onClick={() => setShowAccountMenu(!showAccountMenu)}
@@ -360,7 +372,7 @@ export default function Header() {
 
               {/* Account Dropdown Menu */}
               {user && showAccountMenu && (
-                <div 
+                <div
                   className="absolute top-full right-0 mt-1 w-64 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-[60] animate-in fade-in slide-in-from-top-2 duration-200"
                   onMouseLeave={() => setShowAccountMenu(false)}
                 >
@@ -397,7 +409,7 @@ export default function Header() {
                 </div>
               )}
             </div>
-            
+
             <Link href="/wishlist" className="relative text-gray-800 hover:text-gray-900 transition">
               <Heart className="w-6 h-6" />
               {mounted && wishlistItems.length > 0 && (
@@ -406,7 +418,7 @@ export default function Header() {
                 </div>
               )}
             </Link>
-            
+
             <Link href="/cart" className="relative flex items-center gap-2">
               <ShoppingCart className="w-6 h-6 text-gray-800" />
               {mounted && itemCount > 0 && (
@@ -444,23 +456,35 @@ export default function Header() {
                 className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white shadow-sm text-gray-900"
                 autoComplete="off"
               />
-              
+
               {/* Suggestions Dropdown */}
               {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto z-50">
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl max-h-80 overflow-y-auto z-50">
                   {suggestions.map((product) => (
                     <button
                       key={product.id}
                       type="button"
                       onClick={() => handleSuggestionClick(product.name)}
-                      className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 text-left border-b last:border-b-0"
+                      className="w-full flex items-center gap-3 p-3 hover:bg-green-50 text-left border-b border-gray-100 last:border-b-0 transition-colors"
                     >
-                      <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                      <div className="flex-1">
-                        <div className="text-sm text-gray-900">{highlightMatch(product.name, searchQuery)}</div>
+                      <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                        {product.images && product.images[0] ? (
+                          <img
+                            src={product.images[0]}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Search className="w-4 h-4 text-gray-300" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-gray-900 truncate">{highlightMatch(product.name, searchQuery)}</div>
                         <div className="text-xs text-gray-500">{product.unit}</div>
                       </div>
-                      <div className="text-sm font-semibold text-gray-900">{formatPrice(product.price)}</div>
+                      <div className="text-sm font-bold text-green-600">{formatPrice(product.price)}</div>
                     </button>
                   ))}
                 </div>
@@ -478,16 +502,13 @@ export default function Header() {
                   href="/"
                   className="flex flex-col items-center gap-1 min-w-[70px] group"
                 >
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center group-hover:bg-green-600 transition-colors flex-shrink-0 ${
-                    pathname === '/' ? 'bg-green-600' : 'bg-green-100'
-                  }`}>
-                    <ShoppingCart className={`w-5 h-5 group-hover:text-white transition-colors ${
-                      pathname === '/' ? 'text-white' : 'text-green-600'
-                    }`} />
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center group-hover:bg-green-600 transition-colors flex-shrink-0 ${pathname === '/' ? 'bg-green-600' : 'bg-green-100'
+                    }`}>
+                    <ShoppingCart className={`w-5 h-5 group-hover:text-white transition-colors ${pathname === '/' ? 'text-white' : 'text-green-600'
+                      }`} />
                   </div>
-                  <span className={`text-[10px] md:text-xs font-medium group-hover:text-green-600 transition-colors text-center leading-tight w-full ${
-                    pathname === '/' ? 'text-green-600 font-semibold' : 'text-gray-700'
-                  }`}>
+                  <span className={`text-[10px] md:text-xs font-medium group-hover:text-green-600 transition-colors text-center leading-tight w-full ${pathname === '/' ? 'text-green-600 font-semibold' : 'text-gray-700'
+                    }`}>
                     All Products
                   </span>
                 </Link>
@@ -499,14 +520,12 @@ export default function Header() {
                       href={`/category/${category.slug}`}
                       className="flex flex-col items-center gap-1 min-w-[70px] group"
                     >
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center group-hover:bg-green-600 transition-colors flex-shrink-0 ${
-                        isActive ? 'bg-green-600' : 'bg-green-100'
-                      }`}>
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center group-hover:bg-green-600 transition-colors flex-shrink-0 ${isActive ? 'bg-green-600' : 'bg-green-100'
+                        }`}>
                         <img src={category.image} alt={category.name} className="w-10 h-10 rounded-full object-cover" />
                       </div>
-                      <span className={`text-[10px] md:text-xs font-medium group-hover:text-green-600 transition-colors text-center leading-tight w-full break-words ${
-                        isActive ? 'text-green-600 font-semibold' : 'text-gray-700'
-                      }`}>
+                      <span className={`text-[10px] md:text-xs font-medium group-hover:text-green-600 transition-colors text-center leading-tight w-full break-words ${isActive ? 'text-green-600 font-semibold' : 'text-gray-700'
+                        }`}>
                         {category.name}
                       </span>
                     </Link>
