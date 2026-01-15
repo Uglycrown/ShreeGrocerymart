@@ -149,14 +149,14 @@ export default function SettingsPage() {
                                             <p className="font-medium text-gray-900">{item.label}</p>
                                             <p className="text-sm text-gray-500">{item.description}</p>
                                         </div>
-                                        {item.toggle ? (
+                                        {'toggle' in item && item.toggle ? (
                                             <button
-                                                onClick={item.action}
-                                                className={`w-12 h-6 rounded-full transition-colors ${item.value ? 'bg-green-600' : 'bg-gray-300'
+                                                onClick={'action' in item ? item.action : undefined}
+                                                className={`w-12 h-6 rounded-full transition-colors ${'value' in item && item.value ? 'bg-green-600' : 'bg-gray-300'
                                                     }`}
                                             >
                                                 <div
-                                                    className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${item.value ? 'translate-x-6' : 'translate-x-0.5'
+                                                    className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${'value' in item && item.value ? 'translate-x-6' : 'translate-x-0.5'
                                                         }`}
                                                 />
                                             </button>
@@ -166,19 +166,15 @@ export default function SettingsPage() {
                                     </div>
                                 )
 
-                                if (item.href) {
-                                    return (
-                                        <a key={item.label} href={item.href} className="block hover:bg-gray-50 transition">
-                                            {content}
-                                        </a>
-                                    )
-                                }
-
-                                return (
-                                    <button key={item.label} onClick={item.action} className="w-full text-left hover:bg-gray-50 transition">
+                                return ('href' in item && item.href ? (
+                                    <a key={item.label} href={item.href} className="block hover:bg-gray-50 transition">
+                                        {content}
+                                    </a>
+                                ) : (
+                                    <button key={item.label} onClick={'action' in item ? item.action : undefined} className="w-full text-left hover:bg-gray-50 transition">
                                         {content}
                                     </button>
-                                )
+                                ))
                             })}
                         </div>
                     </div>
