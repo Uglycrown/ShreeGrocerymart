@@ -24,6 +24,7 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState<any[]>([])
   const [showProductForm, setShowProductForm] = useState(false)
   const [editingProduct, setEditingProduct] = useState<any>(null)
+  const [newOrdersCount, setNewOrdersCount] = useState(0)
 
   useEffect(() => {
     fetchCategories()
@@ -108,7 +109,7 @@ export default function AdminDashboard() {
   const handleCategoryCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
-    
+
     try {
       const res = await fetch('/api/categories', {
         method: 'POST',
@@ -137,7 +138,7 @@ export default function AdminDashboard() {
   const handleBannerCreate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
-    
+
     try {
       const res = await fetch('/api/banners', {
         method: 'POST',
@@ -179,47 +180,48 @@ export default function AdminDashboard() {
         <div className="flex gap-4 mb-8 border-b">
           <button
             onClick={() => setActiveTab('products')}
-            className={`flex items-center gap-2 px-6 py-3 font-semibold border-b-2 transition-colors ${
-              activeTab === 'products'
+            className={`flex items-center gap-2 px-6 py-3 font-semibold border-b-2 transition-colors ${activeTab === 'products'
                 ? 'border-green-600 text-green-600'
                 : 'border-transparent text-gray-800 hover:text-gray-900'
-            }`}
+              }`}
           >
             <Package className="w-5 h-5" />
             Products
           </button>
           <button
             onClick={() => setActiveTab('categories')}
-            className={`flex items-center gap-2 px-6 py-3 font-semibold border-b-2 transition-colors ${
-              activeTab === 'categories'
+            className={`flex items-center gap-2 px-6 py-3 font-semibold border-b-2 transition-colors ${activeTab === 'categories'
                 ? 'border-green-600 text-green-600'
                 : 'border-transparent text-gray-800 hover:text-gray-900'
-            }`}
+              }`}
           >
             <Tag className="w-5 h-5" />
             Categories
           </button>
           <button
             onClick={() => setActiveTab('banners')}
-            className={`flex items-center gap-2 px-6 py-3 font-semibold border-b-2 transition-colors ${
-              activeTab === 'banners'
+            className={`flex items-center gap-2 px-6 py-3 font-semibold border-b-2 transition-colors ${activeTab === 'banners'
                 ? 'border-green-600 text-green-600'
                 : 'border-transparent text-gray-800 hover:text-gray-900'
-            }`}
+              }`}
           >
             <ImageIcon className="w-5 h-5" />
             Banners
           </button>
           <button
             onClick={() => setActiveTab('orders')}
-            className={`flex items-center gap-2 px-6 py-3 font-semibold border-b-2 transition-colors ${
-              activeTab === 'orders'
+            className={`flex items-center gap-2 px-6 py-3 font-semibold border-b-2 transition-colors relative ${activeTab === 'orders'
                 ? 'border-green-600 text-green-600'
                 : 'border-transparent text-gray-800 hover:text-gray-900'
-            }`}
+              }`}
           >
             <ShoppingBag className="w-5 h-5" />
             Orders
+            {newOrdersCount > 0 && activeTab !== 'orders' && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 min-w-[20px] flex items-center justify-center px-1 animate-pulse">
+                {newOrdersCount}
+              </span>
+            )}
           </button>
         </div>
 
@@ -242,8 +244,8 @@ export default function AdminDashboard() {
               </div>
 
               {showProductForm ? (
-                <ProductForm 
-                  onSubmit={handleProductSubmit} 
+                <ProductForm
+                  onSubmit={handleProductSubmit}
                   categories={categories}
                   initialData={editingProduct}
                   onCancel={handleCloseForm}
@@ -269,8 +271,8 @@ export default function AdminDashboard() {
                             <td className="px-6 py-4">
                               {product.images && product.images[0] && (
                                 <div className="w-16 h-16 relative">
-                                  <img 
-                                    src={product.images[0]} 
+                                  <img
+                                    src={product.images[0]}
                                     alt={product.name}
                                     className="w-full h-full object-cover rounded"
                                   />
@@ -329,13 +331,13 @@ export default function AdminDashboard() {
           )}
 
           {activeTab === 'orders' && (
-            <OrdersManager onUpdate={() => {}} />
+            <OrdersManager onUpdate={() => { }} onNewOrdersCountChange={setNewOrdersCount} />
           )}
 
           {activeTab === 'banners' && (
             <div>
               <h2 className="text-2xl font-bold mb-6">Banners Management</h2>
-              
+
               <form onSubmit={handleBannerCreate} className="space-y-4 max-w-2xl">
                 <div>
                   <label className="block text-sm font-medium mb-2">Title *</label>

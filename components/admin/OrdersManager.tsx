@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Package, Clock, CheckCircle, XCircle, Truck, Eye, FileText } from 'lucide-react'
+import { Package, Clock, CheckCircle, XCircle, Truck, Eye, FileText, Bell, BellOff, Volume2, VolumeX } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
+import { useOrderNotifications } from '@/lib/hooks/useOrderNotifications'
 
 interface DeliveryAddress {
   addressType?: string;
@@ -36,32 +37,51 @@ interface Order {
 
 interface OrdersManagerProps {
   onUpdate: () => void
+  onNewOrdersCountChange?: (count: number) => void
 }
 
-export default function OrdersManager({ onUpdate }: OrdersManagerProps) {
+export default function OrdersManager({ onUpdate, onNewOrdersCountChange }: OrdersManagerProps) {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [selectedOrderAddress, setSelectedOrderAddress] = useState<DeliveryAddress | null>(null)
-  const [notification, setNotification] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>('all')
+
+  const {
+    settings,
+    newOrdersCount,
+    latestNotification,
+    checkNewOrders,
+    markOrdersAsSeen,
+    clearNotification,
+    toggleSound,
+    requestNotificationPermission,
+  } = useOrderNotifications()
+
+  // Notify parent of new orders count changes
+  useEffect(() => {
+    onNewOrdersCountChange?.(newOrdersCount)
+  }, [newOrdersCount, onNewOrdersCountChange])
 
   const fetchOrders = useCallback(async () => {
     try {
       const url = statusFilter === 'all' ? '/api/orders' : `/api/orders?status=${statusFilter}`
       const response = await fetch(url)
       const data = await response.json()
-      if (data.length > orders.length && !loading) {
-        setNotification(`New order received: ${data[0].orderNumber}`)
-        setTimeout(() => setNotification(null), 5000)
+
+      // Check for new orders (only when not filtering)
+      if (statusFilter === 'all' && !loading) {
+        checkNewOrders(data)
       }
+
       setOrders(data)
     } catch (error) {
       console.error('Error fetching orders:', error)
     } finally {
       if (loading) setLoading(false)
     }
-  }, [statusFilter, orders.length, loading])
+  }, [statusFilter, loading, checkNewOrders])
+
 
   useEffect(() => {
     fetchOrders()
@@ -160,30 +180,113 @@ export default function OrdersManager({ onUpdate }: OrdersManagerProps) {
 
   return (
     <div>
-      {notification && (
-        <div className="fixed top-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-[100] animate-in fade-in slide-in-from-top-4 duration-300">
-          {notification}
+      {/* Enhanced Notification Toast */}
+      {latestNotification && (
+        <div className="fixed top-4 right-4 z-[100] animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="bg-gradient-to-r from-green-600 to-green-700 text-white px-6 py-4 rounded-lg shadow-2xl max-w-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 bg-white/20 rounded-full p-2">
+                <Bell className="w-5 h-5 animate-pulse" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-lg">🛒 New Order!</p>
+                <p className="text-green-100 text-sm mt-1">
+                  Order {latestNotification.orderNumber}
+                </p>
+                <p className="text-white font-medium mt-1">
+                  {latestNotification.customerName} • ₹{latestNotification.total.toFixed(2)}
+                </p>
+              </div>
+              <button
+                onClick={clearNotification}
+                className="text-white/80 hover:text-white text-xl font-bold"
+              >
+                ×
+              </button>
+            </div>
+            <button
+              onClick={() => {
+                markOrdersAsSeen(orders.filter(o => o.status === 'pending').map(o => o.id))
+                clearNotification()
+              }}
+              className="mt-3 w-full bg-white/20 hover:bg-white/30 text-white py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              Mark All as Seen
+            </button>
+          </div>
         </div>
       )}
 
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Orders Management</h2>
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {['all', 'pending', 'confirmed', 'processing', 'out_for_delivery', 'delivered', 'cancelled'].map((status) => (
-            <button
-              key={status}
-              onClick={() => setStatusFilter(status)}
-              className={`px-3 py-1 rounded-lg text-sm font-medium whitespace-nowrap ${
-                statusFilter === status
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl font-bold text-gray-900">Orders Management</h2>
+          {newOrdersCount > 0 && (
+            <span className="inline-flex items-center justify-center bg-red-500 text-white text-xs font-bold rounded-full h-6 min-w-[24px] px-2 animate-pulse">
+              {newOrdersCount} new
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3">
+          {/* Sound Toggle */}
+          <button
+            onClick={toggleSound}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${settings.soundEnabled
+                ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
+            title={settings.soundEnabled ? 'Sound notifications on' : 'Sound notifications off'}
+          >
+            {settings.soundEnabled ? (
+              <>
+                <Volume2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Sound On</span>
+              </>
+            ) : (
+              <>
+                <VolumeX className="w-4 h-4" />
+                <span className="hidden sm:inline">Sound Off</span>
+              </>
+            )}
+          </button>
+
+          {/* Browser Notifications Permission */}
+          {'Notification' in window && Notification.permission !== 'granted' && (
+            <button
+              onClick={requestNotificationPermission}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+              title="Enable browser notifications"
             >
-              {status.replace('_', ' ').toUpperCase()}
+              <Bell className="w-4 h-4" />
+              <span className="hidden sm:inline">Enable Alerts</span>
             </button>
-          ))}
+          )}
         </div>
       </div>
+
+      <div className="flex gap-2 overflow-x-auto pb-4 mb-4">
+        {['all', 'pending', 'confirmed', 'processing', 'out_for_delivery', 'delivered', 'cancelled'].map((status) => (
+          <button
+            key={status}
+            onClick={() => {
+              setStatusFilter(status)
+              if (status === 'pending') {
+                markOrdersAsSeen(orders.filter(o => o.status === 'pending').map(o => o.id))
+              }
+            }}
+            className={`px-3 py-1 rounded-lg text-sm font-medium whitespace-nowrap ${statusFilter === status
+              ? 'bg-green-600 text-white'
+              : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
+              }`}
+          >
+            {status.replace('_', ' ').toUpperCase()}
+            {status === 'pending' && newOrdersCount > 0 && (
+              <span className="ml-1 bg-red-500 text-white text-xs rounded-full px-1.5">{newOrdersCount}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
