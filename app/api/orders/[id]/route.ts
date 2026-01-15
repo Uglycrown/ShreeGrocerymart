@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/mongodb'
 import { ObjectId } from 'mongodb'
-import { getOrderNotificationMessage } from '@/lib/push-notifications'
+import { sendPushNotification, getOrderStatusMessage } from '@/lib/web-push'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -45,31 +45,50 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const result = await db.collection('Order').updateOne({ _id: new ObjectId(id) }, { $set: updateData })
     console.log('Update result:', result)
 
-    // If status changed, create notification for the user
+    // If status changed, send push notification and create in-app notification
     if (data.status && data.status !== currentOrder.status) {
-      const notification = getOrderNotificationMessage({
-        orderId: id,
-        orderNumber: currentOrder.orderNumber,
-        status: data.status,
-        customerName: currentOrder.customerName,
-      })
+      const message = getOrderStatusMessage(data.status, currentOrder.orderNumber)
 
-      // Store notification in database for the user
+      // Store in-app notification
       await db.collection('Notification').insertOne({
         _id: new ObjectId(),
         userId: currentOrder.userId,
         orderId: new ObjectId(id),
         orderNumber: currentOrder.orderNumber,
         type: 'order_status',
-        title: notification.title,
-        body: notification.body,
-        url: notification.url,
+        title: message.title,
+        body: message.body,
+        url: `/orders/${id}`,
         status: data.status,
         isRead: false,
         createdAt: new Date(),
       })
 
-      console.log('📱 Order notification created:', notification.title)
+      // Send push notification to user's subscribed devices
+      if (currentOrder.userId) {
+        const subscriptions = await db.collection('PushSubscription')
+          .find({ userId: currentOrder.userId })
+          .toArray()
+
+        console.log(`📱 Sending push to ${subscriptions.length} devices`)
+
+        for (const sub of subscriptions) {
+          try {
+            await sendPushNotification(
+              { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth },
+              { ...message, url: `/orders/${id}`, tag: `order-${id}` }
+            )
+          } catch (error) {
+            console.error('Push failed:', error)
+            // Remove expired subscriptions
+            if ((error as any)?.statusCode === 410) {
+              await db.collection('PushSubscription').deleteOne({ _id: sub._id })
+            }
+          }
+        }
+      }
+
+      console.log('📱 Order notification created:', message.title)
     }
 
     return NextResponse.json({ message: 'Order updated successfully' })
