@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import ProductCard from '@/components/products/ProductCard'
 import CartSidebar from '@/components/cart/CartSidebar'
-import { ChevronRight, ShoppingBag } from 'lucide-react'
+import { ChevronRight, ShoppingBag, Loader2 } from 'lucide-react'
 import { useCartStore } from '@/lib/store'
 
 export default function Home() {
@@ -14,6 +14,7 @@ export default function Home() {
   const [banners, setBanners] = useState<any[]>([])
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     setMounted(true)
@@ -23,6 +24,7 @@ export default function Home() {
 
   const fetchData = async () => {
     try {
+      setIsLoading(true)
       const [productsRes, categoriesRes, bannersRes] = await Promise.all([
         fetch('/api/products'),
         fetch('/api/categories'),
@@ -40,6 +42,8 @@ export default function Home() {
       setBanners(bannersData)
     } catch (error) {
       console.error('Error fetching data:', error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -191,8 +195,37 @@ export default function Home() {
         )
       })}
 
-      {/* Empty State */}
-      {products.length === 0 && (
+      {/* Loading State */}
+      {isLoading && (
+        <div className="container mx-auto px-4 py-8">
+          {/* Category Skeleton */}
+          <h2 className="text-2xl font-bold mb-6 text-gray-900">Shop by Category</h2>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3 md:gap-4 mb-8">
+            {[...Array(12)].map((_, i) => (
+              <div key={i} className="bg-white rounded-lg p-2 sm:p-3 md:p-4 animate-pulse">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto mb-1.5 sm:mb-2 md:mb-3 bg-gray-200 rounded-full" />
+                <div className="h-3 bg-gray-200 rounded mx-auto w-3/4" />
+              </div>
+            ))}
+          </div>
+
+          {/* Products Skeleton */}
+          <h2 className="text-2xl font-bold mb-6 text-gray-900">Featured Products</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
+            {[...Array(12)].map((_, i) => (
+              <div key={i} className="bg-white rounded-lg p-3 animate-pulse">
+                <div className="aspect-square bg-gray-200 rounded-lg mb-3" />
+                <div className="h-3 bg-gray-200 rounded mb-2 w-3/4" />
+                <div className="h-3 bg-gray-200 rounded mb-2 w-1/2" />
+                <div className="h-4 bg-gray-200 rounded w-1/3" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Empty State - only show after loading completes with no products */}
+      {!isLoading && products.length === 0 && (
         <div className="container mx-auto px-4 py-16 text-center">
           <ShoppingBag className="w-24 h-24 text-gray-300 mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-2 text-gray-900">No products available</h2>
