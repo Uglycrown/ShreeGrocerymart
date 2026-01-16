@@ -6,6 +6,7 @@ import Link from 'next/link'
 import ProductCard from '@/components/products/ProductCard'
 import CartSidebar from '@/components/cart/CartSidebar'
 import Footer from '@/components/Footer'
+import TimeBasedProducts from '@/components/home/TimeBasedProducts'
 import { ChevronRight, ShoppingBag, Loader2 } from 'lucide-react'
 import { useCartStore } from '@/lib/store'
 
@@ -109,6 +110,9 @@ export default function Home() {
           </div>
         </section>
       )}
+
+      {/* Time-Based Product Recommendations */}
+      <TimeBasedProducts />
 
       {/* Categories Grid */}
       <section className="container mx-auto px-4 py-8">

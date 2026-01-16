@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { Upload, X } from 'lucide-react'
+import { Upload, X, Sun, Cloud, Moon, Stars, Clock } from 'lucide-react'
 
 interface ProductFormProps {
   onSubmit: (data: ProductFormData) => Promise<void>
@@ -21,6 +21,7 @@ export interface ProductFormData {
   stock: number
   images: string[]
   tags: string[]
+  timeSlots: string[]
   isActive: boolean
   isFeatured: boolean
   deliveryTime: number
@@ -37,6 +38,7 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
     stock: initialData?.stock || 0,
     images: initialData?.images || [],
     tags: initialData?.tags || [],
+    timeSlots: initialData?.timeSlots || ['ALL_DAY'],
     isActive: initialData?.isActive ?? true,
     isFeatured: initialData?.isFeatured ?? false,
     deliveryTime: initialData?.deliveryTime || 24,

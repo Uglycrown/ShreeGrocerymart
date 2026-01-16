@@ -28,6 +28,7 @@ async function updateProduct(request: NextRequest, id: string) {
   if (body.isFeatured !== undefined) updateData.isFeatured = body.isFeatured
   if (body.deliveryTime) updateData.deliveryTime = body.deliveryTime
   if (body.tags) updateData.tags = body.tags
+  if (body.timeSlots) updateData.timeSlots = body.timeSlots
 
   const result = await db.collection('Product').updateOne({ _id: new ObjectId(id) }, { $set: updateData })
   if (result.matchedCount === 0) return NextResponse.json({ error: 'Product not found' }, { status: 404 })

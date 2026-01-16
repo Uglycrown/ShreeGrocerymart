@@ -120,6 +120,7 @@ model Product {
   isFeatured      Boolean       @default(false)
   deliveryTime    Int           @default(24) // in minutes
   tags            String[]
+  timeSlots       TimeSlot[]    @default([ALL_DAY]) // When to show this product
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   cartItems       CartItem[]
@@ -230,4 +231,12 @@ enum BannerType {
   HERO
   CATEGORY
   PROMOTIONAL
+}
+
+enum TimeSlot {
+  MORNING       // 6:00 AM - 12:00 PM
+  AFTERNOON     // 12:00 PM - 6:00 PM
+  EVENING       // 6:00 PM - 12:00 AM
+  NIGHT         // 12:00 AM - 6:00 AM
+  ALL_DAY       // Available all day
 }

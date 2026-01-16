@@ -39,9 +39,11 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category')
     const search = searchParams.get('search')
     const featured = searchParams.get('featured')
+    const timeSlot = searchParams.get('timeSlot')
+    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 100
 
     // Generate cache key based on params
-    const cacheKey = `products:${categoryId || ''}:${category || ''}:${search || ''}:${featured || ''}`
+    const cacheKey = `products:${categoryId || ''}:${category || ''}:${search || ''}:${featured || ''}:${timeSlot || ''}:${limit}`
 
     // Check cache for non-search queries
     if (!search) {
@@ -74,6 +76,11 @@ export async function GET(request: NextRequest) {
         { name: { $regex: search, $options: 'i' } },
         { tags: { $in: [new RegExp(search, 'i')] } },
       ]
+    }
+
+    // Filter by time slot
+    if (timeSlot) {
+      query.timeSlots = { $in: [timeSlot, 'ALL_DAY'] }
     }
 
     // Get categories map for fast lookups (avoids $lookup)
@@ -113,7 +120,7 @@ export async function GET(request: NextRequest) {
         maxTimeMS: 5000,
       })
       .sort({ isFeatured: -1, createdAt: -1 })
-      .limit(100)
+      .limit(limit)
       .toArray()
 
     // Transform with category info from map (super fast)
@@ -190,6 +197,7 @@ export async function POST(request: NextRequest) {
       isFeatured: body.isFeatured ?? false,
       deliveryTime: body.deliveryTime || 24,
       tags: body.tags || [],
+      timeSlots: body.timeSlots || ['ALL_DAY'],
       createdAt: new Date(),
       updatedAt: new Date(),
     }
