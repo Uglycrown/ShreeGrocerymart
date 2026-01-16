@@ -253,16 +253,16 @@ export default function AdminDashboard() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="h-screen bg-gray-100 flex flex-col">
       {/* Mobile Header */}
-      <div className="lg:hidden bg-white shadow-sm p-4 flex items-center justify-between">
+      <div className="lg:hidden bg-white shadow-sm p-4 flex items-center justify-between flex-shrink-0">
         <h1 className="text-xl font-bold text-gray-900">Admin Panel</h1>
         <button onClick={() => setSidebarOpen(true)} className="p-2 hover:bg-gray-100 rounded-lg">
           <Menu className="w-6 h-6" />
         </button>
       </div>
 
-      <div className="flex">
+      <div className="flex flex-1 overflow-hidden">
         {/* Sidebar Overlay (Mobile) */}
         {sidebarOpen && (
           <div
@@ -273,9 +273,9 @@ export default function AdminDashboard() {
 
         {/* Sidebar */}
         <aside className={`
-          fixed lg:sticky lg:top-0 inset-y-0 left-0 z-50 lg:z-10
+          fixed lg:relative inset-y-0 left-0 z-50 lg:z-10
           w-64 bg-white shadow-lg transform transition-transform duration-300
-          h-screen overflow-y-auto
+          flex-shrink-0 h-full overflow-y-auto
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}>
           <div className="p-6 border-b flex items-center justify-between">
@@ -314,7 +314,7 @@ export default function AdminDashboard() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-4 pt-20 lg:p-8 min-h-screen">
+        <main className="flex-1 overflow-y-auto p-4 lg:p-8">
           {activeTab === 'dashboard' && (
             <Dashboard onNavigate={(tab) => setActiveTab(tab as Tab)} />
           )}
