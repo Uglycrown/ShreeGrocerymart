@@ -119,15 +119,15 @@ export default function TimeBasedProducts() {
     const Icon = config.icon
 
     return (
-        <section className={`${config.bgTheme} py-8 my-4 rounded-3xl transition-colors duration-500`}>
+        <section className={`${config.bgTheme} py-4 my-0 rounded-2xl transition-colors duration-500`}>
             <div className="container mx-auto px-4">
                 {/* Header */}
-                <div className={`bg-gradient-to-r ${config.gradient} rounded-2xl p-6 mb-6 text-white shadow-lg`}>
-                    <div className="flex items-center gap-3 mb-2">
-                        <Icon className="w-8 h-8" />
-                        <h2 className="text-2xl md:text-3xl font-bold">{config.title}</h2>
+                <div className={`bg-gradient-to-r ${config.gradient} rounded-xl p-4 mb-4 text-white shadow-lg`}>
+                    <div className="flex items-center gap-2 mb-1">
+                        <Icon className="w-6 h-6" />
+                        <h2 className="text-xl md:text-2xl font-bold">{config.title}</h2>
                     </div>
-                    <p className="text-white/90 text-sm md:text-base">{config.subtitle}</p>
+                    <p className="text-white/90 text-xs md:text-sm">{config.subtitle}</p>
                 </div>
 
                 {/* Products Carousel */}
@@ -144,7 +144,7 @@ export default function TimeBasedProducts() {
                     {/* Scrollable Container */}
                     <div
                         ref={scrollContainerRef}
-                        className="flex gap-3 md:gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory scroll-smooth pb-4"
+                        className="flex gap-3 md:gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory scroll-smooth pb-1"
                         style={{
                             scrollbarWidth: 'none',
                             msOverflowStyle: 'none',
@@ -199,7 +199,7 @@ export default function TimeBasedProducts() {
                 </div>
 
                 {/* Mobile Scroll Indicator */}
-                <div className="flex justify-center gap-1 mt-4 md:hidden">
+                <div className="flex justify-center gap-1 mt-2 md:hidden">
                     {products.length > 0 && [...Array(Math.min(5, Math.ceil(products.length / 2)))].map((_, i) => (
                         <div
                             key={i}
