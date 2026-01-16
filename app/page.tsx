@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import ProductCard from '@/components/products/ProductCard'
 import CartSidebar from '@/components/cart/CartSidebar'
+import Footer from '@/components/Footer'
 import { ChevronRight, ShoppingBag, Loader2 } from 'lucide-react'
 import { useCartStore } from '@/lib/store'
 
@@ -241,6 +242,9 @@ export default function Home() {
 
       {/* Cart Sidebar */}
       <CartSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+
+      {/* Footer */}
+      <Footer />
 
       {/* Floating Cart Button */}
       <button

@@ -91,7 +91,6 @@ export default function RootLayout({
           <div className="relative z-10">
             <Header />
             {children}
-            <Footer />
             <BottomNav />
           </div>
         </Providers>
