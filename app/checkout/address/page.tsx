@@ -15,8 +15,11 @@ export default function SelectAddressPage() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
+  const [user, setUser] = useState<any>(null)
   const [formData, setFormData] = useState({
     label: 'Home',
+    name: '',
+    phone: '',
     street: '',
     landmark: '',
     city: 'New Delhi',
@@ -31,18 +34,30 @@ export default function SelectAddressPage() {
 
   const checkAuthAndFetchAddresses = async () => {
     const storedUser = localStorage.getItem('user')
-    
+
     if (status === 'unauthenticated' && !storedUser) {
       router.push('/login?callbackUrl=/checkout/address')
       return
     }
 
     let userId = ''
+    let userData: any = null
     if (status === 'authenticated' && session?.user) {
       userId = (session.user as any).id
+      userData = session.user
     } else if (storedUser) {
-      const user = JSON.parse(storedUser)
-      userId = user.id
+      userData = JSON.parse(storedUser)
+      userId = userData.id
+    }
+
+    if (userData) {
+      setUser(userData)
+      // Pre-fill name and phone from user data
+      setFormData(prev => ({
+        ...prev,
+        name: userData.name || '',
+        phone: userData.phoneNumber || userData.phone || '',
+      }))
     }
 
     if (userId) {
@@ -53,10 +68,29 @@ export default function SelectAddressPage() {
 
   const fetchAddresses = async (userId: string) => {
     try {
+      console.log('Fetching addresses for userId:', userId)
       const res = await fetch(`/api/addresses?userId=${userId}`)
+
       if (res.ok) {
         const data = await res.json()
         setAddresses(data)
+      } else {
+        console.error('Failed to fetch addresses. Status:', res.status)
+        // Try to parse error response, but handle if it's not JSON
+        let errorData: any = {}
+        try {
+          errorData = await res.json()
+        } catch {
+          console.error('Response was not JSON')
+        }
+        console.error('Error data:', errorData)
+
+        // If invalid user ID, clear localStorage and redirect to login
+        if (errorData.message === 'Invalid user ID format') {
+          localStorage.removeItem('user')
+          localStorage.removeItem('userPhone')
+          router.push('/login?callbackUrl=/checkout/address')
+        }
       }
     } catch (err) {
       console.error('Error fetching addresses:', err)
@@ -101,6 +135,8 @@ export default function SelectAddressPage() {
         setShowAddForm(false)
         setFormData({
           label: 'Home',
+          name: user?.name || '',
+          phone: user?.phoneNumber || user?.phone || '',
           street: '',
           landmark: '',
           city: 'New Delhi',
@@ -108,10 +144,22 @@ export default function SelectAddressPage() {
           isDefault: false
         })
         // Optionally select the new address immediately
-        handleSelectAddress(newAddress.id) 
+        handleSelectAddress(newAddress.id)
+      } else {
+        const errorData = await res.json()
+        console.error('Error adding address:', errorData)
+        if (errorData.message === 'Invalid user ID format') {
+          alert('Session expired. Please log in again.')
+          localStorage.removeItem('user')
+          localStorage.removeItem('userPhone')
+          router.push('/login?callbackUrl=/checkout/address')
+        } else {
+          alert(errorData.message || 'Failed to save address. Please try again.')
+        }
       }
     } catch (error) {
       console.error('Error adding address:', error)
+      alert('Something went wrong. Please try again.')
     } finally {
       setSubmitting(false)
     }
@@ -161,7 +209,7 @@ export default function SelectAddressPage() {
               <h2 className="text-lg font-bold text-gray-900">Add New Address</h2>
               <button onClick={() => setShowAddForm(false)} className="text-gray-500 hover:text-gray-700">Cancel</button>
             </div>
-            
+
             <form onSubmit={handleAddAddress} className="space-y-4">
               <div className="flex gap-4 mb-2">
                 {['Home', 'Work', 'Other'].map((type) => (
@@ -169,15 +217,42 @@ export default function SelectAddressPage() {
                     key={type}
                     type="button"
                     onClick={() => setFormData({ ...formData, label: type })}
-                    className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                      formData.label === type
-                        ? 'bg-green-600 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
+                    className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${formData.label === type
+                      ? 'bg-green-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
                   >
                     {type}
                   </button>
                 ))}
+              </div>
+
+              {/* Name and Phone */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Recipient's name"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
+                  <input
+                    type="tel"
+                    required
+                    pattern="[0-9]{10}"
+                    maxLength={10}
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                    placeholder="10-digit mobile"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
               </div>
 
               <div>
@@ -243,15 +318,15 @@ export default function SelectAddressPage() {
         <div className="space-y-4">
           <h2 className="text-lg font-semibold text-gray-900 mb-2">Saved Addresses</h2>
           {addresses.length === 0 && !loading && !showAddForm ? (
-             <div className="text-center py-10 bg-white rounded-lg border border-dashed border-gray-300">
-               <MapPin className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-               <p className="text-gray-500">No saved addresses found</p>
-               <p className="text-sm text-gray-400">Add a new address to proceed</p>
-             </div>
+            <div className="text-center py-10 bg-white rounded-lg border border-dashed border-gray-300">
+              <MapPin className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500">No saved addresses found</p>
+              <p className="text-sm text-gray-400">Add a new address to proceed</p>
+            </div>
           ) : (
             addresses.map((addr) => (
-              <div 
-                key={addr.id} 
+              <div
+                key={addr.id}
                 className="bg-white p-5 rounded-lg shadow-sm border border-gray-100 hover:border-green-200 transition-all cursor-pointer group"
                 onClick={() => handleSelectAddress(addr.id)}
               >
@@ -270,7 +345,7 @@ export default function SelectAddressPage() {
                       {addr.street}, {addr.landmark ? `${addr.landmark}, ` : ''}{addr.city}, {addr.pincode}
                     </p>
                   </div>
-                  <button 
+                  <button
                     onClick={(e) => {
                       e.stopPropagation()
                       handleSelectAddress(addr.id)

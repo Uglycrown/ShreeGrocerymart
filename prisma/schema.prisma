@@ -68,8 +68,8 @@ model Address {
   userId    String   @db.ObjectId
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   label     String   // Home, Work, Other
-  name      String   // Recipient name
-  phone     String   // Contact number
+  name      String?  @default("") // Recipient name (optional for backwards compatibility)
+  phone     String?  @default("") // Contact number (optional for backwards compatibility)
   street    String   // Full address
   landmark  String?
   city      String
