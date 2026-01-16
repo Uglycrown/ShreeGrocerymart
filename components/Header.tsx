@@ -297,10 +297,6 @@ export default function Header() {
               </Link>
               <div className="flex items-center gap-2 text-xs mt-1">
                 <div className="font-semibold text-gray-800">Delivery in 24 minutes</div>
-                <div className="flex items-center gap-1 text-gray-700">
-                  <MapPin className="w-3 h-3" />
-                  <span>New Delhi, 110037</span>
-                </div>
               </div>
             </div>
           </div>
