@@ -6,6 +6,7 @@ import CategoryManager from '@/components/admin/CategoryManager'
 import OrdersManager from '@/components/admin/OrdersManager'
 import Dashboard from '@/components/admin/Dashboard'
 import CustomerManager from '@/components/admin/CustomerManager'
+import BannerManager from '@/components/admin/BannerManager'
 import { useDialog } from '@/components/providers/DialogProvider'
 import {
   Package,
@@ -510,76 +511,7 @@ export default function AdminDashboard() {
           )}
 
           {activeTab === 'banners' && (
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h2 className="text-2xl font-bold mb-6 text-gray-900">Banners Management</h2>
-
-              <form onSubmit={handleBannerCreate} className="space-y-4 max-w-2xl">
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700">Title *</label>
-                  <input
-                    type="text"
-                    name="title"
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="e.g., Stock up on daily essentials"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700">Subtitle</label>
-                  <input
-                    type="text"
-                    name="subtitle"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Additional description"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700">Image URL *</label>
-                  <input
-                    type="text"
-                    name="image"
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="https://example.com/banner.png"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700">Link</label>
-                  <input
-                    type="text"
-                    name="link"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="/category/dairy"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700">CTA Text</label>
-                  <input
-                    type="text"
-                    name="ctaText"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Shop Now"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700">Type</label>
-                  <select
-                    name="type"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-900 bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  >
-                    <option value="HERO">Hero</option>
-                    <option value="CATEGORY">Category</option>
-                    <option value="PROMOTIONAL">Promotional</option>
-                  </select>
-                </div>
-                <button
-                  type="submit"
-                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition"
-                >
-                  Create Banner
-                </button>
-              </form>
-            </div>
+            <BannerManager />
           )}
         </main>
       </div>
