@@ -34,7 +34,7 @@ export default function CheckoutClientPage() {
     email: '',
     address: '',
     landmark: '',
-    city: 'New Delhi',
+    city: '',
     pincode: '',
     instructions: '',
   })

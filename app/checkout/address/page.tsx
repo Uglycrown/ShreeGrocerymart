@@ -22,7 +22,7 @@ export default function SelectAddressPage() {
     phone: '',
     street: '',
     landmark: '',
-    city: 'New Delhi',
+    city: '',
     pincode: '',
     isDefault: false
   })
@@ -139,7 +139,7 @@ export default function SelectAddressPage() {
           phone: user?.phoneNumber || user?.phone || '',
           street: '',
           landmark: '',
-          city: 'New Delhi',
+          city: '',
           pincode: '',
           isDefault: false
         })
@@ -267,7 +267,18 @@ export default function SelectAddressPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    placeholder="City"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Landmark</label>
                   <input
