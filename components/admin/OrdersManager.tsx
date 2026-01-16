@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Package, Clock, CheckCircle, XCircle, Truck, Eye, FileText, Bell, BellOff, Volume2, VolumeX } from 'lucide-react'
+import { Package, Clock, CheckCircle, XCircle, Truck, Eye, FileText, Bell, BellOff, Volume2, VolumeX, Search, Calendar, Filter } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { useOrderNotifications } from '@/lib/hooks/useOrderNotifications'
+import { useDialog } from '@/components/providers/DialogProvider'
 
 interface DeliveryAddress {
   addressType?: string;
@@ -42,10 +43,16 @@ interface OrdersManagerProps {
 
 export default function OrdersManager({ onUpdate, onNewOrdersCountChange }: OrdersManagerProps) {
   const [orders, setOrders] = useState<Order[]>([])
+  const [filteredOrders, setFilteredOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [selectedOrderAddress, setSelectedOrderAddress] = useState<DeliveryAddress | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [customerSearch, setCustomerSearch] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+
+  const { showSuccess, showError } = useDialog()
 
   const {
     settings,
@@ -91,6 +98,36 @@ export default function OrdersManager({ onUpdate, onNewOrdersCountChange }: Orde
     return () => clearInterval(interval)
   }, [fetchOrders])
 
+  // Filter orders based on search and date
+  useEffect(() => {
+    let filtered = [...orders]
+
+    // Customer search
+    if (customerSearch) {
+      const search = customerSearch.toLowerCase()
+      filtered = filtered.filter(o =>
+        o.customerName?.toLowerCase().includes(search) ||
+        o.customerPhone?.includes(search) ||
+        o.orderNumber?.toLowerCase().includes(search)
+      )
+    }
+
+    // Date from filter
+    if (dateFrom) {
+      const fromDate = new Date(dateFrom)
+      filtered = filtered.filter(o => new Date(o.createdAt) >= fromDate)
+    }
+
+    // Date to filter
+    if (dateTo) {
+      const toDate = new Date(dateTo)
+      toDate.setHours(23, 59, 59, 999)
+      filtered = filtered.filter(o => new Date(o.createdAt) <= toDate)
+    }
+
+    setFilteredOrders(filtered)
+  }, [orders, customerSearch, dateFrom, dateTo])
+
   useEffect(() => {
     if (selectedOrder) {
       if (typeof selectedOrder.deliveryAddress === 'string') {
@@ -117,15 +154,15 @@ export default function OrdersManager({ onUpdate, onNewOrdersCountChange }: Orde
       })
 
       if (response.ok) {
-        alert('Order status updated successfully!')
+        showSuccess('Order status updated successfully!')
         fetchOrders()
         onUpdate()
       } else {
-        alert('Failed to update order status')
+        showError('Failed to update order status')
       }
     } catch (error) {
       console.error('Error updating order:', error)
-      alert('Error updating order status')
+      showError('Error updating order status')
     }
   }
 
@@ -138,15 +175,15 @@ export default function OrdersManager({ onUpdate, onNewOrdersCountChange }: Orde
       })
 
       if (response.ok) {
-        alert('Payment status updated successfully!')
+        showSuccess('Payment status updated successfully!')
         fetchOrders()
         onUpdate()
       } else {
-        alert('Failed to update payment status')
+        showError('Failed to update payment status')
       }
     } catch (error) {
       console.error('Error updating payment:', error)
-      alert('Error updating payment status')
+      showError('Error updating payment status')
     }
   }
 
@@ -232,8 +269,8 @@ export default function OrdersManager({ onUpdate, onNewOrdersCountChange }: Orde
           <button
             onClick={toggleSound}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${settings.soundEnabled
-                ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              ? 'bg-green-100 text-green-700 hover:bg-green-200'
+              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             title={settings.soundEnabled ? 'Sound notifications on' : 'Sound notifications off'}
           >
@@ -287,6 +324,55 @@ export default function OrdersManager({ onUpdate, onNewOrdersCountChange }: Orde
         ))}
       </div>
 
+      {/* Search and Date Filters */}
+      <div className="flex flex-col lg:flex-row gap-4 mb-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search by customer name, phone, or order #..."
+            value={customerSearch}
+            onChange={(e) => setCustomerSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Calendar className="w-5 h-5 text-gray-400" />
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+            placeholder="From"
+          />
+          <span className="text-gray-500">to</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg text-gray-900"
+            placeholder="To"
+          />
+          {(dateFrom || dateTo || customerSearch) && (
+            <button
+              onClick={() => {
+                setDateFrom('')
+                setDateTo('')
+                setCustomerSearch('')
+              }}
+              className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Results count */}
+      <p className="text-sm text-gray-600 mb-4">
+        Showing {filteredOrders.length} of {orders.length} orders
+      </p>
+
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
@@ -304,7 +390,7 @@ export default function OrdersManager({ onUpdate, onNewOrdersCountChange }: Orde
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {orders.map((order) => (
+              {filteredOrders.map((order) => (
                 <tr key={order.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">{order.orderNumber}</td>
                   <td className="px-6 py-4">
@@ -371,9 +457,9 @@ export default function OrdersManager({ onUpdate, onNewOrdersCountChange }: Orde
           </table>
         </div>
 
-        {orders.length === 0 && (
+        {filteredOrders.length === 0 && (
           <div className="text-center py-12 text-gray-900">
-            No orders found
+            {orders.length === 0 ? 'No orders found' : 'No orders match your filters'}
           </div>
         )}
       </div>
