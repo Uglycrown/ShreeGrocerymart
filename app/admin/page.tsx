@@ -25,7 +25,12 @@ import {
   ChevronDown,
   AlertTriangle,
   CheckSquare,
-  Square
+  Square,
+  Clock,
+  Sun,
+  Cloud,
+  Moon,
+  Stars
 } from 'lucide-react'
 
 type Tab = 'dashboard' | 'products' | 'categories' | 'banners' | 'orders' | 'customers'
@@ -55,6 +60,7 @@ export default function AdminDashboard() {
   const [categoryFilter, setCategoryFilter] = useState('')
   const [stockFilter, setStockFilter] = useState<'all' | 'low' | 'out'>('all')
   const [selectedProducts, setSelectedProducts] = useState<string[]>([])
+  const [showTimeSlotDropdown, setShowTimeSlotDropdown] = useState(false)
 
   const { showConfirm, showSuccess, showError } = useDialog()
 
@@ -186,6 +192,41 @@ export default function AdminDashboard() {
       fetchProducts()
     } catch (error) {
       showError('Error deleting products')
+    }
+  }
+
+  const TIME_SLOT_OPTIONS = [
+    { value: 'ALL_DAY', label: 'All Day', icon: Clock, color: 'text-green-600' },
+    { value: 'MORNING', label: 'Morning (6AM-12PM)', icon: Sun, color: 'text-yellow-500' },
+    { value: 'AFTERNOON', label: 'Afternoon (12PM-6PM)', icon: Cloud, color: 'text-blue-500' },
+    { value: 'EVENING', label: 'Evening (6PM-12AM)', icon: Moon, color: 'text-purple-500' },
+    { value: 'NIGHT', label: 'Night (12AM-6AM)', icon: Stars, color: 'text-indigo-500' },
+  ]
+
+  const handleBulkTimeSlotUpdate = async (timeSlots: string[]) => {
+    if (selectedProducts.length === 0) return
+
+    try {
+      const res = await fetch('/api/products/bulk-update', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productIds: selectedProducts,
+          updates: { timeSlots }
+        })
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        showSuccess(`Updated time slots for ${data.modifiedCount} products!`)
+        setSelectedProducts([])
+        setShowTimeSlotDropdown(false)
+        fetchProducts()
+      } else {
+        showError('Failed to update time slots')
+      }
+    } catch (error) {
+      showError('Error updating time slots')
     }
   }
 
@@ -391,17 +432,59 @@ export default function AdminDashboard() {
 
                   {/* Bulk Actions */}
                   {selectedProducts.length > 0 && (
-                    <div className="p-3 bg-blue-50 border-b flex items-center justify-between">
+                    <div className="p-3 bg-blue-50 border-b flex flex-wrap items-center justify-between gap-3">
                       <span className="text-blue-700 font-medium">
                         {selectedProducts.length} products selected
                       </span>
-                      <button
-                        onClick={handleBulkDelete}
-                        className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Delete Selected
-                      </button>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {/* Time Slot Dropdown */}
+                        <div className="relative">
+                          <button
+                            onClick={() => setShowTimeSlotDropdown(!showTimeSlotDropdown)}
+                            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition"
+                          >
+                            <Clock className="w-4 h-4" />
+                            Set Time Slot
+                            <ChevronDown className={`w-4 h-4 transition-transform ${showTimeSlotDropdown ? 'rotate-180' : ''}`} />
+                          </button>
+
+                          {showTimeSlotDropdown && (
+                            <>
+                              <div
+                                className="fixed inset-0 z-10"
+                                onClick={() => setShowTimeSlotDropdown(false)}
+                              />
+                              <div className="absolute top-full mt-2 right-0 z-20 bg-white rounded-lg shadow-xl border border-gray-200 py-2 min-w-[220px]">
+                                <div className="px-3 py-2 border-b border-gray-100">
+                                  <p className="text-xs font-medium text-gray-500 uppercase">Select Time Slot</p>
+                                </div>
+                                {TIME_SLOT_OPTIONS.map(option => {
+                                  const Icon = option.icon
+                                  return (
+                                    <button
+                                      key={option.value}
+                                      onClick={() => handleBulkTimeSlotUpdate([option.value])}
+                                      className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition text-left"
+                                    >
+                                      <Icon className={`w-5 h-5 ${option.color}`} />
+                                      <span className="text-gray-700">{option.label}</span>
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Delete Button */}
+                        <button
+                          onClick={handleBulkDelete}
+                          className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete Selected
+                        </button>
+                      </div>
                     </div>
                   )}
 
