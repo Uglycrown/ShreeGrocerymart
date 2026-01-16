@@ -5,17 +5,6 @@ import { serverCache, CACHE_KEYS, CACHE_TTL } from '@/lib/server-cache'
 // GET all banners - Optimized with caching
 export async function GET() {
   try {
-    // Check cache first
-    const cached = serverCache.get<any[]>(CACHE_KEYS.BANNERS)
-    if (cached) {
-      return NextResponse.json(cached, {
-        headers: {
-          'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=1200',
-          'X-Cache': 'HIT',
-        },
-      })
-    }
-
     const db = await getDb()
     const banners = await db.collection('Banner')
       .find(
@@ -49,22 +38,17 @@ export async function GET() {
       order: banner.order,
     }))
 
-    // Cache banners
-    serverCache.set(CACHE_KEYS.BANNERS, bannersWithId, CACHE_TTL.BANNERS)
-
     return NextResponse.json(bannersWithId, {
       headers: {
-        'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=1200',
-        'CDN-Cache-Control': 'public, s-maxage=600',
-        'Vercel-CDN-Cache-Control': 'public, s-maxage=600, stale-while-revalidate=1200',
-        'X-Cache': 'MISS',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+        'X-Cache': 'DISABLED',
       },
     })
   } catch (error) {
     console.error('Error fetching banners:', error)
     return NextResponse.json([], {
       status: 200,
-      headers: { 'Cache-Control': 'public, max-age=30' },
+      headers: { 'Cache-Control': 'no-store' },
     })
   }
 }

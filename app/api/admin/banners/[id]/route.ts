@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/mongodb'
 import { ObjectId } from 'mongodb'
 import { serverCache, CACHE_KEYS } from '@/lib/server-cache'
+import { revalidatePath } from 'next/cache'
 
 // GET single banner
 export async function GET(
@@ -69,6 +70,7 @@ export async function PUT(
 
         // Invalidate cache
         serverCache.invalidate(CACHE_KEYS.BANNERS)
+        revalidatePath('/')
 
         return NextResponse.json({ message: 'Banner updated successfully' })
     } catch (error) {
@@ -107,6 +109,7 @@ export async function PATCH(
 
         // Invalidate cache
         serverCache.invalidate(CACHE_KEYS.BANNERS)
+        revalidatePath('/')
 
         return NextResponse.json({ message: 'Banner updated successfully' })
     } catch (error) {
@@ -133,6 +136,7 @@ export async function DELETE(
 
         // Invalidate cache
         serverCache.invalidate(CACHE_KEYS.BANNERS)
+        revalidatePath('/')
 
         return NextResponse.json({ message: 'Banner deleted successfully' })
     } catch (error) {

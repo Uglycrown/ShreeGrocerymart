@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getDb } from '@/lib/mongodb'
 import { ObjectId } from 'mongodb'
 import { serverCache, CACHE_KEYS } from '@/lib/server-cache'
+import { revalidatePath } from 'next/cache'
 
 // GET all banners (admin - includes inactive)
 export async function GET() {
@@ -52,6 +53,7 @@ export async function POST(request: NextRequest) {
 
         // Invalidate cache
         serverCache.invalidate(CACHE_KEYS.BANNERS)
+        revalidatePath('/')
 
         return NextResponse.json({
             id: banner.insertedId.toString(),
