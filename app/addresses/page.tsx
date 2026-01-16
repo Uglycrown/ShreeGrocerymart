@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { MapPin, Plus, Trash2, Home, Briefcase, Building, Phone, User } from 'lucide-react'
+import { MapPin, Plus, Trash2, Pencil, Home, Briefcase, Building, Phone, User } from 'lucide-react'
 
 interface Address {
     id: string
@@ -152,12 +152,22 @@ export default function AddressesPage() {
                                         <p className="text-gray-500 text-sm">{address.city} - {address.pincode}</p>
                                     </div>
 
-                                    <button
-                                        onClick={() => deleteAddress(address.id)}
-                                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition flex-shrink-0"
-                                    >
-                                        <Trash2 className="w-5 h-5" />
-                                    </button>
+                                    <div className="flex flex-col gap-2 flex-shrink-0">
+                                        <button
+                                            onClick={() => router.push(`/addresses/edit/${address.id}`)}
+                                            className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition"
+                                            title="Edit address"
+                                        >
+                                            <Pencil className="w-5 h-5" />
+                                        </button>
+                                        <button
+                                            onClick={() => deleteAddress(address.id)}
+                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+                                            title="Delete address"
+                                        >
+                                            <Trash2 className="w-5 h-5" />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         ))}
