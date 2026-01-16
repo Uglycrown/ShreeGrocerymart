@@ -348,6 +348,56 @@ export default function ProductForm({ onSubmit, initialData, categories, onCance
         </div>
       </div>
 
+      {/* Time Slots */}
+      <div>
+        <label className="block text-sm font-medium mb-3 text-gray-900">When to Show This Product</label>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {[
+            { value: 'MORNING', label: 'Morning', icon: Sun, time: '6 AM - 12 PM', color: 'orange' },
+            { value: 'AFTERNOON', label: 'Afternoon', icon: Cloud, time: '12 PM - 6 PM', color: 'blue' },
+            { value: 'EVENING', label: 'Evening', icon: Moon, time: '6 PM - 12 AM', color: 'purple' },
+            { value: 'NIGHT', label: 'Night', icon: Stars, time: '12 AM - 6 AM', color: 'indigo' },
+            { value: 'ALL_DAY', label: 'All Day', icon: Clock, time: 'Always visible', color: 'green' },
+          ].map(slot => {
+            const Icon = slot.icon
+            const isSelected = formData.timeSlots.includes(slot.value)
+            return (
+              <label
+                key={slot.value}
+                className={`flex items-start gap-3 p-3 border-2 rounded-lg cursor-pointer transition ${isSelected
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                  }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={(e) => {
+                    const newSlots = e.target.checked
+                      ? [...formData.timeSlots, slot.value]
+                      : formData.timeSlots.filter(s => s !== slot.value)
+                    setFormData({ ...formData, timeSlots: newSlots.length > 0 ? newSlots : ['ALL_DAY'] })
+                  }}
+                  className="w-4 h-4 mt-0.5"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Icon className={`w-4 h-4 ${isSelected ? 'text-green-600' : 'text-gray-500'}`} />
+                    <span className={`text-sm font-medium ${isSelected ? 'text-green-900' : 'text-gray-900'}`}>
+                      {slot.label}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600">{slot.time}</p>
+                </div>
+              </label>
+            )
+          })}
+        </div>
+        <p className="text-xs text-gray-600 mt-2">
+          Select when customers should see this product. Choose ALL_DAY to show it anytime.
+        </p>
+      </div>
+
       {/* Toggles */}
       <div className="flex gap-6">
         <label className="flex items-center gap-2">

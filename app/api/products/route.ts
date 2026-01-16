@@ -72,15 +72,25 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { tags: { $in: [new RegExp(search, 'i')] } },
-      ]
+      query.$and = query.$and || []
+      query.$and.push({
+        $or: [
+          { name: { $regex: search, $options: 'i' } },
+          { tags: { $in: [new RegExp(search, 'i')] } },
+        ]
+      })
     }
 
-    // Filter by time slot
+    // Filter by time slot - also include products without timeSlots field (backward compatibility)
     if (timeSlot) {
-      query.timeSlots = { $in: [timeSlot, 'ALL_DAY'] }
+      query.$and = query.$and || []
+      query.$and.push({
+        $or: [
+          { timeSlots: { $in: [timeSlot, 'ALL_DAY'] } },
+          { timeSlots: { $exists: false } },
+          { timeSlots: { $size: 0 } }
+        ]
+      })
     }
 
     // Get categories map for fast lookups (avoids $lookup)
