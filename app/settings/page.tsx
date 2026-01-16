@@ -4,11 +4,13 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { Bell, BellOff, Moon, Sun, Globe, Shield, HelpCircle, LogOut, ChevronRight } from 'lucide-react'
+import { useDialog } from '@/components/providers/DialogProvider'
 
 export default function SettingsPage() {
     const router = useRouter()
     const { data: session, status } = useSession()
     const [user, setUser] = useState<any>(null)
+    const { showAlert, showConfirm } = useDialog()
     const [notificationsEnabled, setNotificationsEnabled] = useState(false)
     const [darkMode, setDarkMode] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
@@ -44,7 +46,10 @@ export default function SettingsPage() {
             const permission = await Notification.requestPermission()
             setNotificationsEnabled(permission === 'granted')
         } else {
-            alert('To disable notifications, go to your browser settings.')
+            showAlert('To disable notifications, go to your browser settings.', {
+                title: 'Notifications',
+                variant: 'info'
+            })
         }
     }
 
@@ -56,7 +61,12 @@ export default function SettingsPage() {
     }
 
     const handleLogout = async () => {
-        if (confirm('Are you sure you want to logout?')) {
+        const confirmed = await showConfirm('Are you sure you want to logout?', {
+            title: 'Logout',
+            confirmText: 'Logout',
+            variant: 'warning'
+        })
+        if (confirmed) {
             localStorage.removeItem('user')
             localStorage.removeItem('userPhone')
             await signOut({ redirect: false })

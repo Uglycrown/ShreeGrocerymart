@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { ArrowLeft, Plus, MapPin, Home, Briefcase, Map, Loader2 } from 'lucide-react'
+import { useDialog } from '@/components/providers/DialogProvider'
 
 export default function SelectAddressPage() {
   const router = useRouter()
@@ -14,6 +15,7 @@ export default function SelectAddressPage() {
   const [addresses, setAddresses] = useState<any[]>([])
   const [showAddForm, setShowAddForm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const { showError, showWarning } = useDialog()
 
   const [user, setUser] = useState<any>(null)
   const [formData, setFormData] = useState({
@@ -149,17 +151,17 @@ export default function SelectAddressPage() {
         const errorData = await res.json()
         console.error('Error adding address:', errorData)
         if (errorData.message === 'Invalid user ID format') {
-          alert('Session expired. Please log in again.')
+          showWarning('Session expired. Please log in again.', 'Session Expired')
           localStorage.removeItem('user')
           localStorage.removeItem('userPhone')
           router.push('/login?callbackUrl=/checkout/address')
         } else {
-          alert(errorData.message || 'Failed to save address. Please try again.')
+          showError(errorData.message || 'Failed to save address. Please try again.')
         }
       }
     } catch (error) {
       console.error('Error adding address:', error)
-      alert('Something went wrong. Please try again.')
+      showError('Something went wrong. Please try again.')
     } finally {
       setSubmitting(false)
     }

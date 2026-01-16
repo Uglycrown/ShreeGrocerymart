@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { CheckCircle, MapPin, Phone, FileText, XCircle, Clock, Package, Truck, RefreshCw } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
+import { useDialog } from '@/components/providers/DialogProvider'
 
 interface Order {
   id: string
@@ -26,6 +27,7 @@ export default function OrderPage() {
   const [order, setOrder] = useState<Order | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const { showConfirm, showSuccess, showError } = useDialog()
 
   // Fetch order data
   const fetchOrder = useCallback(async (showRefresh = false) => {
@@ -86,7 +88,14 @@ export default function OrderPage() {
   }
 
   const handleCancelOrder = async () => {
-    if (order && confirm('Are you sure you want to cancel this order?')) {
+    if (!order) return
+    const confirmed = await showConfirm('Are you sure you want to cancel this order?', {
+      title: 'Cancel Order',
+      confirmText: 'Yes, Cancel',
+      cancelText: 'No, Keep It',
+      variant: 'error'
+    })
+    if (confirmed) {
       try {
         const response = await fetch(`/api/orders/${order.id}`, {
           method: 'PATCH',
@@ -95,14 +104,14 @@ export default function OrderPage() {
         })
 
         if (response.ok) {
-          alert('Order cancelled successfully!')
+          showSuccess('Order cancelled successfully!')
           setOrder({ ...order, status: 'cancelled' })
         } else {
-          alert('Failed to cancel order')
+          showError('Failed to cancel order')
         }
       } catch (error) {
         console.error('Error cancelling order:', error)
-        alert('Error cancelling order')
+        showError('Error cancelling order')
       }
     }
   }

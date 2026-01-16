@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { User, MapPin, Phone, Mail, Settings, LogOut, ChevronRight, Heart, Package, ShoppingBag, Bell, Loader2, RefreshCw } from 'lucide-react'
 import { useSession, signOut } from 'next-auth/react'
 import { formatPrice } from '@/lib/utils'
+import { useDialog } from '@/components/providers/DialogProvider'
 
 export default function AccountPage() {
   const [mounted, setMounted] = useState(false)
@@ -12,18 +13,18 @@ export default function AccountPage() {
   const [stats, setStats] = useState({ orders: 0, spent: 0 })
   const { data: session, status } = useSession()
   const router = useRouter()
-// ... keep state and effects ...
+  // ... keep state and effects ...
 
 
   useEffect(() => {
     setMounted(true)
     const phoneNumber = localStorage.getItem('userPhone')
     const storedUser = localStorage.getItem('user')
-    
+
     if (phoneNumber) {
       setUser({ phoneNumber })
     } else if (status === 'authenticated' && session?.user) {
-        setUser(session.user)
+      setUser(session.user)
     }
 
     // Fetch Stats
@@ -61,8 +62,15 @@ export default function AccountPage() {
     }
   }, [session, status])
 
+  const { showConfirm } = useDialog()
+
   const handleLogout = async () => {
-    if (confirm('Are you sure you want to logout?')) {
+    const confirmed = await showConfirm('Are you sure you want to logout?', {
+      title: 'Logout',
+      confirmText: 'Logout',
+      variant: 'warning'
+    })
+    if (confirmed) {
       localStorage.removeItem('userPhone')
       localStorage.removeItem('user')
       await signOut({ redirect: false })
@@ -80,9 +88,9 @@ export default function AccountPage() {
 
   if (!mounted || status === 'loading') {
     return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 text-green-600 animate-spin" />
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-green-600 animate-spin" />
+      </div>
     )
   }
 
@@ -111,7 +119,7 @@ export default function AccountPage() {
         ) : (
           <>
             <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 mb-6">
-              <div 
+              <div
                 className="bg-white rounded-lg shadow-md p-2 sm:p-3 md:p-4 text-center cursor-pointer hover:bg-gray-50 transition"
                 onClick={() => router.push('/orders')}
               >
@@ -119,7 +127,7 @@ export default function AccountPage() {
                 <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">{stats.orders}</div>
                 <div className="text-[10px] sm:text-xs text-gray-600">Orders</div>
               </div>
-              <div 
+              <div
                 className="bg-white rounded-lg shadow-md p-2 sm:p-3 md:p-4 text-center cursor-pointer hover:bg-gray-50 transition"
                 onClick={() => router.push('/wishlist')}
               >
@@ -127,7 +135,7 @@ export default function AccountPage() {
                 <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">0</div>
                 <div className="text-[10px] sm:text-xs text-gray-600">Wishlist</div>
               </div>
-              <div 
+              <div
                 className="bg-white rounded-lg shadow-md p-2 sm:p-3 md:p-4 text-center cursor-pointer hover:bg-gray-50 transition"
                 onClick={() => router.push('/orders')}
               >

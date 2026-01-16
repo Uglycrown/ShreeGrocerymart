@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { MapPin, Home, Briefcase, Building, ArrowLeft, User, Phone } from 'lucide-react'
+import { useDialog } from '@/components/providers/DialogProvider'
 
 export default function EditAddressPage() {
     const router = useRouter()
@@ -13,6 +14,7 @@ export default function EditAddressPage() {
     const [user, setUser] = useState<any>(null)
     const [loading, setLoading] = useState(false)
     const [fetching, setFetching] = useState(true)
+    const { showError } = useDialog()
     const [formData, setFormData] = useState({
         type: 'home',
         name: '',
@@ -55,12 +57,12 @@ export default function EditAddressPage() {
                         isDefault: data.isDefault || false,
                     })
                 } else {
-                    alert('Address not found')
+                    showError('Address not found')
                     router.push('/addresses')
                 }
             } catch (error) {
                 console.error('Error fetching address:', error)
-                alert('Error loading address')
+                showError('Error loading address')
                 router.push('/addresses')
             } finally {
                 setFetching(false)
@@ -74,17 +76,17 @@ export default function EditAddressPage() {
         e.preventDefault()
 
         if (!formData.name || !formData.phone || !formData.address || !formData.city || !formData.pincode) {
-            alert('Please fill all required fields')
+            showError('Please fill all required fields', 'Missing Information')
             return
         }
 
         if (formData.phone.length !== 10) {
-            alert('Please enter a valid 10-digit phone number')
+            showError('Please enter a valid 10-digit phone number', 'Invalid Phone')
             return
         }
 
         if (formData.pincode.length !== 6) {
-            alert('Please enter a valid 6-digit pincode')
+            showError('Please enter a valid 6-digit pincode', 'Invalid Pincode')
             return
         }
 
@@ -109,11 +111,11 @@ export default function EditAddressPage() {
                 router.push('/addresses')
             } else {
                 const error = await response.json()
-                alert(error.message || 'Failed to update address')
+                showError(error.message || 'Failed to update address')
             }
         } catch (error) {
             console.error('Error updating address:', error)
-            alert('Error updating address')
+            showError('Error updating address')
         } finally {
             setLoading(false)
         }

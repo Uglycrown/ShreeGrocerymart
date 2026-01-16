@@ -7,12 +7,14 @@ import { Heart, ShoppingCart, Trash2, ArrowLeft } from 'lucide-react'
 import { useWishlistStore } from '@/lib/wishlist-store'
 import { useCartStore } from '@/lib/store'
 import { formatPrice } from '@/lib/utils'
+import { useDialog } from '@/components/providers/DialogProvider'
 
 export default function WishlistPage() {
   const router = useRouter()
   const { items, removeItem, clearWishlist } = useWishlistStore()
   const { addItem: addToCart, items: cartItems } = useCartStore()
   const [mounted, setMounted] = useState(false)
+  const { showConfirm } = useDialog()
 
   useEffect(() => {
     setMounted(true)
@@ -35,8 +37,13 @@ export default function WishlistPage() {
     removeItem(id)
   }
 
-  const handleClearAll = () => {
-    if (confirm('Are you sure you want to clear your wishlist?')) {
+  const handleClearAll = async () => {
+    const confirmed = await showConfirm('Are you sure you want to clear your wishlist?', {
+      title: 'Clear Wishlist',
+      confirmText: 'Clear All',
+      variant: 'warning'
+    })
+    if (confirmed) {
       clearWishlist()
     }
   }

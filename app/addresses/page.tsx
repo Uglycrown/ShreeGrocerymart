@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { MapPin, Plus, Trash2, Pencil, Home, Briefcase, Building, Phone, User } from 'lucide-react'
+import { useDialog } from '@/components/providers/DialogProvider'
 
 interface Address {
     id: string
@@ -20,6 +21,7 @@ interface Address {
 export default function AddressesPage() {
     const router = useRouter()
     const { data: session, status } = useSession()
+    const { showConfirm } = useDialog()
     const [addresses, setAddresses] = useState<Address[]>([])
     const [loading, setLoading] = useState(true)
     const [user, setUser] = useState<any>(null)
@@ -69,7 +71,13 @@ export default function AddressesPage() {
     }
 
     const deleteAddress = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this address?')) return
+        const confirmed = await showConfirm('Are you sure you want to delete this address?', {
+            title: 'Delete Address',
+            confirmText: 'Delete',
+            cancelText: 'Cancel',
+            variant: 'error'
+        })
+        if (!confirmed) return
 
         try {
             const response = await fetch(`/api/addresses/${id}`, { method: 'DELETE' })

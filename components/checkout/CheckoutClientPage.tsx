@@ -8,6 +8,7 @@ import { useCartStore } from '@/lib/store'
 import { formatPrice } from '@/lib/utils'
 import { ArrowLeft, MapPin, Clock, ShoppingBag, Loader2, User } from 'lucide-react'
 import { useSession } from 'next-auth/react'
+import { useDialog } from '@/components/providers/DialogProvider'
 
 export default function CheckoutClientPage() {
   const router = useRouter()
@@ -21,6 +22,7 @@ export default function CheckoutClientPage() {
 
   const [savedAddresses, setSavedAddresses] = useState<any[]>([])
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null)
+  const { showError, showSuccess, showWarning } = useDialog()
 
   const itemsTotal = getTotal()
   const deliveryCharge = 25
@@ -132,7 +134,7 @@ export default function CheckoutClientPage() {
       }
 
       if (!userId) {
-        alert('Please login to place an order')
+        showWarning('Please login to place an order', 'Login Required')
         router.push('/login')
         return
       }
@@ -177,16 +179,16 @@ export default function CheckoutClientPage() {
       const result = await response.json()
 
       if (response.ok) {
-        alert('Order placed successfully! Order ID: ' + result.orderNumber)
+        showSuccess('Order placed successfully! Order ID: ' + result.orderNumber, 'Order Confirmed')
         clearCart()
         router.push('/orders/' + result.orderId)
       } else {
         const errorMsg = result.error || result.message || 'Unknown error'
-        alert('Failed to place order: ' + errorMsg)
+        showError('Failed to place order: ' + errorMsg)
       }
     } catch (error: any) {
       console.error('Error placing order:', error)
-      alert('Error placing order: ' + error.message)
+      showError('Error placing order: ' + error.message)
     } finally {
       setIsProcessing(false)
     }

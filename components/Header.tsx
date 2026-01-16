@@ -9,6 +9,7 @@ import { formatPrice } from '@/lib/utils'
 import { useEffect, useState, useRef } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import NotificationBell from './NotificationBell'
+import { useDialog } from '@/components/providers/DialogProvider'
 
 interface Product {
   id: string;
@@ -112,8 +113,16 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [session, status])
 
+  const { showConfirm } = useDialog()
+
   const handleLogout = async () => {
-    if (confirm('Are you sure you want to logout?')) {
+    const confirmed = await showConfirm('Are you sure you want to logout?', {
+      title: 'Logout',
+      confirmText: 'Logout',
+      cancelText: 'Cancel',
+      variant: 'warning'
+    })
+    if (confirmed) {
       localStorage.removeItem('userPhone')
       localStorage.removeItem('user')
       await signOut({ redirect: false })
