@@ -41,6 +41,7 @@ export async function GET(request: NextRequest) {
     const featured = searchParams.get('featured')
     const timeSlot = searchParams.get('timeSlot')
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 100
+    const admin = searchParams.get('admin') === 'true'
 
     // Generate cache key based on params
     const cacheKey = `products:${categoryId || ''}:${category || ''}:${search || ''}:${featured || ''}:${timeSlot || ''}:${limit}`
@@ -61,7 +62,8 @@ export async function GET(request: NextRequest) {
     const db = await getDb()
 
     // Build optimized query
-    const query: any = { isActive: true }
+    // For admin panel, show all products including inactive ones
+    const query: any = admin ? {} : { isActive: true }
 
     if (categoryId) {
       query.categoryId = new ObjectId(categoryId)

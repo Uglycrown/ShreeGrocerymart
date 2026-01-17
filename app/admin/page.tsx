@@ -110,7 +110,7 @@ export default function AdminDashboard() {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch('/api/products?limit=1000')
+      const res = await fetch('/api/products?limit=1000&admin=true')
       const data = await res.json()
       setProducts(data)
     } catch (error) {
