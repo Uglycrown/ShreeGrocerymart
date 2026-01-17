@@ -196,9 +196,23 @@ export async function POST(request: NextRequest) {
                         continue
                     }
 
-                    const category = categoryMap.get(categoryName.toLowerCase())
+                    // Parse category - handle format like "Parent Category > Subcategory"
+                    // Extract the last part after ">" as the actual category name
+                    let parsedCategoryName = categoryName
+                    if (categoryName.includes('>')) {
+                        const parts = categoryName.split('>')
+                        parsedCategoryName = parts[parts.length - 1].trim()
+                    }
+
+                    let category = categoryMap.get(parsedCategoryName.toLowerCase())
+
+                    // If not found, try matching with original name (in case there's no ">")
+                    if (!category && parsedCategoryName !== categoryName) {
+                        category = categoryMap.get(categoryName.toLowerCase())
+                    }
+
                     if (!category) {
-                        errors.push(`Row ${rowNumber}: Category "${categoryName}" not found`)
+                        errors.push(`Row ${rowNumber}: Category "${parsedCategoryName}" not found`)
                         continue
                     }
 
