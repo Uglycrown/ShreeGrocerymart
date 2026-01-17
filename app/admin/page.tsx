@@ -7,6 +7,7 @@ import OrdersManager from '@/components/admin/OrdersManager'
 import Dashboard from '@/components/admin/Dashboard'
 import CustomerManager from '@/components/admin/CustomerManager'
 import BannerManager from '@/components/admin/BannerManager'
+import InventoryManager from '@/components/admin/InventoryManager'
 import { useDialog } from '@/components/providers/DialogProvider'
 import {
   Package,
@@ -30,10 +31,11 @@ import {
   Sun,
   Cloud,
   Moon,
-  Stars
+  Stars,
+  FileUp
 } from 'lucide-react'
 
-type Tab = 'dashboard' | 'products' | 'categories' | 'banners' | 'orders' | 'customers'
+type Tab = 'dashboard' | 'products' | 'categories' | 'banners' | 'orders' | 'customers' | 'inventory'
 
 interface Category {
   id: string
@@ -288,6 +290,7 @@ export default function AdminDashboard() {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'products', label: 'Products', icon: Package },
+    { id: 'inventory', label: 'Inventory', icon: FileUp },
     { id: 'categories', label: 'Categories', icon: Tag },
     { id: 'orders', label: 'Orders', icon: ShoppingBag, badge: newOrdersCount },
     { id: 'customers', label: 'Customers', icon: Users },
@@ -595,6 +598,10 @@ export default function AdminDashboard() {
 
           {activeTab === 'banners' && (
             <BannerManager />
+          )}
+
+          {activeTab === 'inventory' && (
+            <InventoryManager />
           )}
         </main>
       </div>

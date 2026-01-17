@@ -240,3 +240,28 @@ enum TimeSlot {
   NIGHT         // 12:00 AM - 6:00 AM
   ALL_DAY       // Available all day
 }
+
+// Inventory Version Control - Stores complete inventory snapshot before each upload
+model InventorySnapshot {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String   // Upload description/filename
+  products     Json     // Complete product data at snapshot time
+  productCount Int      // Number of products in snapshot
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// Tracks upload history with summary
+model InventoryUploadLog {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  fileName        String
+  snapshotId      String   @db.ObjectId  // Reference to pre-upload snapshot
+  productsUpdated Int
+  productsCreated Int
+  productsDeleted Int      @default(0)
+  errors          Json?    // Any errors during import
+  createdAt       DateTime @default(now())
+
+  @@index([createdAt])
+}
