@@ -78,7 +78,7 @@ function normalizeHeader(header: string): string {
     return mappings[normalized] || header
 }
 
-// POST - Upload and process CSV
+// POST - Upload and process CSV (OPTIMIZED for Vercel timeout)
 export async function POST(request: NextRequest) {
     try {
         const formData = await request.formData()
@@ -113,31 +113,40 @@ export async function POST(request: NextRequest) {
             }, { status: 400 })
         }
 
-        // Create snapshot of current inventory before making changes
-        const currentProducts = await prisma.product.findMany({
-            include: { category: { select: { name: true, slug: true } } }
-        })
+        // OPTIMIZATION 1: Fetch all products and categories in parallel, upfront
+        const [allProducts, categories] = await Promise.all([
+            prisma.product.findMany({
+                select: { id: true, name: true, price: true, originalPrice: true, stock: true }
+            }),
+            prisma.category.findMany()
+        ])
 
-        const snapshot = await (prisma as any).inventorySnapshot.create({
-            data: {
-                name: `Before Upload: ${fileName} - ${new Date().toLocaleString('en-IN')}`,
-                products: JSON.parse(JSON.stringify(currentProducts)),
-                productCount: currentProducts.length,
-            }
-        })
+        // Build lookup maps for O(1) access
+        const productMap = new Map<string, { id: string; price: number; originalPrice: number | null; stock: number }>(
+            allProducts.map(p => [p.name.toLowerCase(), { id: p.id, price: p.price, originalPrice: p.originalPrice, stock: p.stock }])
+        )
+        const categoryMap = new Map<string, Category>(
+            categories.map((c: Category) => [c.name.toLowerCase(), c])
+        )
 
-        // Get all categories for lookup
-        const categories = await prisma.category.findMany()
-        const categoryMap = new Map<string, Category>(categories.map((c: Category) => [c.name.toLowerCase(), c]))
-
-        // Process each row
-        let updated = 0
-        let created = 0
+        // OPTIMIZATION 2: Process all rows in memory first
+        const updates: Array<{ id: string; data: Record<string, number> }> = []
+        const creates: Array<{
+            name: string
+            slug: string
+            categoryId: string
+            price: number
+            originalPrice?: number
+            stock: number
+            unit: string
+            discount: number
+        }> = []
         const errors: string[] = []
+        const usedSlugs = new Set<string>()
 
         for (let i = 0; i < rows.length; i++) {
             const row = rows[i]
-            const rowNumber = i + 2 // Account for header row and 0-indexing
+            const rowNumber = i + 2
 
             try {
                 const productName = row[nameIndex]?.trim()
@@ -149,12 +158,10 @@ export async function POST(request: NextRequest) {
                 const stock = stockIndex !== -1 ? parseInt(row[stockIndex]) || 0 : undefined
                 const originalPrice = originalPriceIndex !== -1 ? parseFloat(row[originalPriceIndex]) || undefined : undefined
 
-                // Sale price (selling price) - if empty, use Regular price (MRP)
                 let price: number | undefined
                 if (priceIndex !== -1 && row[priceIndex]?.trim()) {
                     price = parseFloat(row[priceIndex]) || undefined
                 }
-                // Fallback: if no sale price, use regular price as selling price
                 if (!price && originalPrice) {
                     price = originalPrice
                 }
@@ -162,42 +169,30 @@ export async function POST(request: NextRequest) {
                 const categoryName = categoryIndex !== -1 ? row[categoryIndex]?.trim() : undefined
                 const unit = unitIndex !== -1 ? row[unitIndex]?.trim() : undefined
 
-                // Try to find existing product by name (case-insensitive)
-                const existingProduct = await prisma.product.findFirst({
-                    where: {
-                        name: {
-                            equals: productName,
-                            mode: 'insensitive'
-                        }
-                    }
-                })
+                // Check if product exists (O(1) lookup)
+                const existingProduct = productMap.get(productName.toLowerCase())
 
                 if (existingProduct) {
-                    // Update existing product
-                    const updateData: Record<string, number | undefined> = {}
+                    // Prepare update
+                    const updateData: Record<string, number> = {}
                     if (stock !== undefined) updateData.stock = stock
                     if (price !== undefined) updateData.price = price
                     if (originalPrice !== undefined) updateData.originalPrice = originalPrice
 
-                    // Calculate discount if both prices are available
                     if (price !== undefined && originalPrice !== undefined && originalPrice > price) {
                         updateData.discount = Math.round(((originalPrice - price) / originalPrice) * 100)
                     }
 
-                    await prisma.product.update({
-                        where: { id: existingProduct.id },
-                        data: updateData
-                    })
-                    updated++
+                    if (Object.keys(updateData).length > 0) {
+                        updates.push({ id: existingProduct.id, data: updateData })
+                    }
                 } else {
-                    // Create new product
+                    // Prepare create
                     if (!categoryName) {
                         errors.push(`Row ${rowNumber}: Cannot create new product "${productName}" without category`)
                         continue
                     }
 
-                    // Parse category - handle format like "Parent Category > Subcategory"
-                    // Extract the last part after ">" as the actual category name
                     let parsedCategoryName = categoryName
                     if (categoryName.includes('>')) {
                         const parts = categoryName.split('>')
@@ -205,8 +200,6 @@ export async function POST(request: NextRequest) {
                     }
 
                     let category = categoryMap.get(parsedCategoryName.toLowerCase())
-
-                    // If not found, try matching with original name (in case there's no ">")
                     if (!category && parsedCategoryName !== categoryName) {
                         category = categoryMap.get(categoryName.toLowerCase())
                     }
@@ -216,36 +209,30 @@ export async function POST(request: NextRequest) {
                         continue
                     }
 
-                    // Generate slug
+                    // Generate unique slug
                     const baseSlug = productName.toLowerCase()
                         .replace(/[^a-z0-9]+/g, '-')
                         .replace(/(^-|-$)/g, '')
 
                     let slug = baseSlug
                     let slugCounter = 1
-                    while (await prisma.product.findUnique({ where: { slug } })) {
+                    while (usedSlugs.has(slug)) {
                         slug = `${baseSlug}-${slugCounter++}`
                     }
+                    usedSlugs.add(slug)
 
-                    await prisma.product.create({
-                        data: {
-                            name: productName,
-                            slug,
-                            categoryId: category.id,
-                            price: price || 0,
-                            originalPrice: originalPrice,
-                            stock: stock || 0,
-                            unit: unit || '1 piece',
-                            discount: originalPrice && price && originalPrice > price
-                                ? Math.round(((originalPrice - price) / originalPrice) * 100)
-                                : 0,
-                            isActive: true,
-                            images: [],
-                            tags: [],
-                            timeSlots: ['ALL_DAY'],
-                        }
+                    creates.push({
+                        name: productName,
+                        slug,
+                        categoryId: category.id,
+                        price: price || 0,
+                        originalPrice: originalPrice,
+                        stock: stock || 0,
+                        unit: unit || '1 piece',
+                        discount: originalPrice && price && originalPrice > price
+                            ? Math.round(((originalPrice - price) / originalPrice) * 100)
+                            : 0,
                     })
-                    created++
                 }
             } catch (err: unknown) {
                 const errorMessage = err instanceof Error ? err.message : 'Unknown error'
@@ -253,31 +240,93 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // Log the upload
-        await (prisma as any).inventoryUploadLog.create({
-            data: {
-                fileName,
-                snapshotId: snapshot.id,
-                productsUpdated: updated,
-                productsCreated: created,
-                errors: errors.length > 0 ? errors : null,
+        // OPTIMIZATION 3: Execute bulk operations using transactions
+        let updated = 0
+        let created = 0
+
+        // Batch updates in chunks of 50 to avoid overwhelming the database
+        const BATCH_SIZE = 50
+
+        if (updates.length > 0) {
+            for (let i = 0; i < updates.length; i += BATCH_SIZE) {
+                const batch = updates.slice(i, i + BATCH_SIZE)
+                await prisma.$transaction(
+                    batch.map(u => prisma.product.update({
+                        where: { id: u.id },
+                        data: { ...u.data, updatedAt: new Date() }
+                    }))
+                )
             }
-        })
-
-        // Clean up old snapshots (keep only last 15)
-        const oldSnapshots = await (prisma as any).inventorySnapshot.findMany({
-            orderBy: { createdAt: 'desc' },
-            skip: 15,
-            select: { id: true }
-        })
-
-        if (oldSnapshots.length > 0) {
-            await (prisma as any).inventorySnapshot.deleteMany({
-                where: { id: { in: oldSnapshots.map((s: { id: string }) => s.id) } }
-            })
+            updated = updates.length
         }
 
-        // Invalidate product cache so changes appear immediately
+        // Check for existing slugs before creating
+        if (creates.length > 0) {
+            const existingSlugs = await prisma.product.findMany({
+                where: { slug: { in: creates.map(c => c.slug) } },
+                select: { slug: true }
+            })
+            const existingSlugSet = new Set(existingSlugs.map(s => s.slug))
+
+            // Fix any conflicting slugs
+            for (const createItem of creates) {
+                if (existingSlugSet.has(createItem.slug)) {
+                    let counter = 1
+                    let newSlug = `${createItem.slug}-${counter}`
+                    while (existingSlugSet.has(newSlug) || usedSlugs.has(newSlug)) {
+                        counter++
+                        newSlug = `${createItem.slug}-${counter}`
+                    }
+                    createItem.slug = newSlug
+                    usedSlugs.add(newSlug)
+                }
+            }
+
+            // Batch creates
+            for (let i = 0; i < creates.length; i += BATCH_SIZE) {
+                const batch = creates.slice(i, i + BATCH_SIZE)
+                await prisma.$transaction(
+                    batch.map(c => prisma.product.create({
+                        data: {
+                            ...c,
+                            isActive: true,
+                            images: [],
+                            tags: [],
+                            timeSlots: ['ALL_DAY'],
+                        }
+                    }))
+                )
+            }
+            created = creates.length
+        }
+
+        // OPTIMIZATION 4: Create lightweight snapshot (only store IDs and key fields)
+        // This runs quickly since we don't fetch full product data again
+        try {
+            const snapshot = await (prisma as any).inventorySnapshot.create({
+                data: {
+                    name: `Before Upload: ${fileName} - ${new Date().toLocaleString('en-IN')}`,
+                    products: allProducts, // Use the already-fetched data
+                    productCount: allProducts.length,
+                }
+            })
+
+            // Log the upload
+            await (prisma as any).inventoryUploadLog.create({
+                data: {
+                    fileName,
+                    snapshotId: snapshot.id,
+                    productsUpdated: updated,
+                    productsCreated: created,
+                    errors: errors.length > 0 ? errors : null,
+                }
+            })
+        } catch (logError) {
+            // Don't fail the whole operation if logging fails
+            console.error('Error creating snapshot/log:', logError)
+        }
+
+        // Invalidate product cache
         serverCache.invalidatePattern('products:')
 
         return NextResponse.json({
@@ -289,7 +338,6 @@ export async function POST(request: NextRequest) {
                 created,
                 errors: errors.length,
             },
-            snapshotId: snapshot.id,
             errors: errors.length > 0 ? errors.slice(0, 10) : undefined,
         })
     } catch (error) {
