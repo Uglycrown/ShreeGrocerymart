@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { Category } from '@prisma/client'
+import { serverCache } from '@/lib/server-cache'
 
 // Helper function to parse CSV content
 function parseCSV(csvContent: string): { headers: string[], rows: string[][] } {
@@ -261,6 +262,9 @@ export async function POST(request: NextRequest) {
                 where: { id: { in: oldSnapshots.map((s: { id: string }) => s.id) } }
             })
         }
+
+        // Invalidate product cache so changes appear immediately
+        serverCache.invalidatePattern('products:')
 
         return NextResponse.json({
             success: true,

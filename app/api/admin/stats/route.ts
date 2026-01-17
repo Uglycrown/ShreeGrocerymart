@@ -36,8 +36,8 @@ export async function GET(request: NextRequest) {
             ordersByStatus,
             revenueStats
         ] = await Promise.all([
-            // Total products
-            prisma.product.count({ where: { isActive: true } }),
+            // Total products (all products including inactive for admin view)
+            prisma.product.count(),
 
             // Total customers
             prisma.user.count({ where: { role: 'USER' } }),

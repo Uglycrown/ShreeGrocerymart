@@ -46,8 +46,8 @@ export async function GET(request: NextRequest) {
     // Generate cache key based on params
     const cacheKey = `products:${categoryId || ''}:${category || ''}:${search || ''}:${featured || ''}:${timeSlot || ''}:${limit}`
 
-    // Check cache for non-search queries
-    if (!search) {
+    // Check cache for non-search queries (skip cache for admin requests)
+    if (!search && !admin) {
       const cached = serverCache.get<any[]>(cacheKey)
       if (cached) {
         return NextResponse.json(cached, {
