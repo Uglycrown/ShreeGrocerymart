@@ -156,6 +156,12 @@ export default function InventoryManager() {
         setUploadResult(null)
         setUploadProgress(null)
 
+        // Declare outside try so catch can access them
+        let totalUpdated = 0
+        let totalCreated = 0
+        let totalErrors = 0
+        const allErrors: string[] = []
+
         try {
             // Parse CSV on client side
             const csvContent = await selectedFile.text()
@@ -179,10 +185,6 @@ export default function InventoryManager() {
             }
 
             const totalChunks = chunks.length
-            let totalUpdated = 0
-            let totalCreated = 0
-            let totalErrors = 0
-            const allErrors: string[] = []
 
             // Upload each chunk sequentially with retry logic
             for (let i = 0; i < chunks.length; i++) {
