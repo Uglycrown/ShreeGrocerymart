@@ -47,8 +47,30 @@ interface UploadResult {
         created: number
         errors: number
     }
-    snapshotId: string
+    snapshotId?: string
     errors?: string[]
+}
+
+// Helper to parse CSV on client side
+function parseCSVClient(csvContent: string): { headers: string[], rows: string[][] } {
+    const lines = csvContent.split(/\r?\n/).filter(line => line.trim())
+    if (lines.length === 0) return { headers: [], rows: [] }
+
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase())
+    const rows = lines.slice(1).map(line => {
+        const values: string[] = []
+        let current = ''
+        let inQuotes = false
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i]
+            if (char === '"') inQuotes = !inQuotes
+            else if (char === ',' && !inQuotes) { values.push(current.trim()); current = '' }
+            else current += char
+        }
+        values.push(current.trim())
+        return values
+    })
+    return { headers, rows }
 }
 
 export default function InventoryManager() {
@@ -61,6 +83,7 @@ export default function InventoryManager() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [confirmRollback, setConfirmRollback] = useState<string | null>(null)
     const [expandedLog, setExpandedLog] = useState<string | null>(null)
+    const [uploadProgress, setUploadProgress] = useState<{ current: number; total: number } | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
@@ -122,6 +145,7 @@ export default function InventoryManager() {
         if (e.target.files && e.target.files[0]) {
             setSelectedFile(e.target.files[0])
             setUploadResult(null)
+            setUploadProgress(null)
         }
     }
 
@@ -130,43 +154,98 @@ export default function InventoryManager() {
 
         setIsLoading(true)
         setUploadResult(null)
+        setUploadProgress(null)
 
         try {
-            const formData = new FormData()
-            formData.append('file', selectedFile)
+            // Parse CSV on client side
+            const csvContent = await selectedFile.text()
+            const { headers, rows } = parseCSVClient(csvContent)
 
-            const res = await fetch('/api/admin/inventory/upload', {
-                method: 'POST',
-                body: formData,
-            })
-
-            const data = await res.json()
-
-            if (res.ok) {
-                setUploadResult(data)
-                setSelectedFile(null)
-                if (fileInputRef.current) {
-                    fileInputRef.current.value = ''
-                }
-                fetchSnapshots()
-                fetchUploadLogs()
-            } else {
+            if (headers.length === 0 || rows.length === 0) {
                 setUploadResult({
                     success: false,
-                    message: data.error || 'Upload failed',
+                    message: 'Invalid CSV file - no data found',
                     stats: { total: 0, updated: 0, created: 0, errors: 0 },
-                    snapshotId: '',
                 })
+                setIsLoading(false)
+                return
             }
+
+            // Split into chunks of 20 rows each
+            const CHUNK_SIZE = 20
+            const chunks: string[][][] = []
+            for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
+                chunks.push(rows.slice(i, i + CHUNK_SIZE))
+            }
+
+            const totalChunks = chunks.length
+            let totalUpdated = 0
+            let totalCreated = 0
+            let totalErrors = 0
+            const allErrors: string[] = []
+
+            // Upload each chunk sequentially
+            for (let i = 0; i < chunks.length; i++) {
+                setUploadProgress({ current: i + 1, total: totalChunks })
+
+                const formData = new FormData()
+                formData.append('isChunked', 'true')
+                formData.append('chunkIndex', i.toString())
+                formData.append('totalChunks', totalChunks.toString())
+                formData.append('isLastChunk', (i === chunks.length - 1).toString())
+                formData.append('fileName', selectedFile.name)
+                formData.append('chunkData', JSON.stringify({
+                    headers,
+                    rows: chunks[i]
+                }))
+
+                const res = await fetch('/api/admin/inventory/upload', {
+                    method: 'POST',
+                    body: formData,
+                })
+
+                const data = await res.json()
+
+                if (!res.ok) {
+                    throw new Error(data.error || `Chunk ${i + 1} failed`)
+                }
+
+                totalUpdated += data.stats?.updated || 0
+                totalCreated += data.stats?.created || 0
+                totalErrors += data.stats?.errors || 0
+                if (data.errors) {
+                    allErrors.push(...data.errors)
+                }
+            }
+
+            setUploadResult({
+                success: true,
+                message: `Successfully processed ${rows.length} products in ${totalChunks} batches`,
+                stats: {
+                    total: rows.length,
+                    updated: totalUpdated,
+                    created: totalCreated,
+                    errors: totalErrors,
+                },
+                errors: allErrors.length > 0 ? allErrors.slice(0, 10) : undefined,
+            })
+
+            setSelectedFile(null)
+            if (fileInputRef.current) {
+                fileInputRef.current.value = ''
+            }
+            fetchSnapshots()
+            fetchUploadLogs()
+
         } catch (error) {
             setUploadResult({
                 success: false,
-                message: 'Network error occurred',
+                message: error instanceof Error ? error.message : 'Upload failed',
                 stats: { total: 0, updated: 0, created: 0, errors: 0 },
-                snapshotId: '',
             })
         } finally {
             setIsLoading(false)
+            setUploadProgress(null)
         }
     }
 
@@ -361,7 +440,9 @@ export default function InventoryManager() {
                             {isLoading ? (
                                 <>
                                     <RefreshCw className="w-5 h-5 animate-spin" />
-                                    Processing...
+                                    {uploadProgress
+                                        ? `Processing batch ${uploadProgress.current}/${uploadProgress.total}...`
+                                        : 'Preparing...'}
                                 </>
                             ) : (
                                 <>
@@ -370,6 +451,25 @@ export default function InventoryManager() {
                                 </>
                             )}
                         </button>
+                    )}
+
+                    {/* Upload Progress Bar */}
+                    {uploadProgress && (
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-sm text-gray-600">
+                                <span>Uploading batches...</span>
+                                <span>{Math.round((uploadProgress.current / uploadProgress.total) * 100)}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-3">
+                                <div
+                                    className="bg-green-600 h-3 rounded-full transition-all duration-300"
+                                    style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+                                />
+                            </div>
+                            <p className="text-xs text-gray-500 text-center">
+                                Batch {uploadProgress.current} of {uploadProgress.total}
+                            </p>
+                        </div>
                     )}
 
                     {/* Upload Result */}

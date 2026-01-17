@@ -46,60 +46,64 @@ function normalizeHeader(header: string): string {
     const normalized = header.toLowerCase().replace(/[^a-z0-9]/g, '')
 
     const mappings: Record<string, string> = {
-        // Product Name mappings
         'productname': 'name',
         'name': 'name',
-        // Stock mappings
         'stockquantity': 'stock',
         'stock': 'stock',
         'quantity': 'stock',
         'qty': 'stock',
-        // Regular Price (MRP) mappings
         'regularprice': 'originalPrice',
         'mrp': 'originalPrice',
         'originalprice': 'originalPrice',
-        // Sale Price (Selling Price) mappings
         'saleprice': 'price',
         'sellingprice': 'price',
         'price': 'price',
-        // Category mappings
         'categories': 'category',
         'category': 'category',
         'categoryname': 'category',
-        // Other mappings
         'unit': 'unit',
         'description': 'description',
-        'taxstatus': 'taxStatus',
-        'taxclass': 'taxClass',
-        'instock': 'inStock',
-        'lowstockamount': 'lowStockAmount',
     }
 
     return mappings[normalized] || header
 }
 
-// POST - Upload and process CSV (OPTIMIZED for Vercel timeout)
+// POST - Upload and process CSV in chunks
 export async function POST(request: NextRequest) {
     try {
         const formData = await request.formData()
-        const file = formData.get('file') as File
+        const file = formData.get('file') as File | null
+        const chunkData = formData.get('chunkData') as string | null
+        const isChunked = formData.get('isChunked') === 'true'
+        const chunkIndex = parseInt(formData.get('chunkIndex') as string) || 0
+        const totalChunks = parseInt(formData.get('totalChunks') as string) || 1
+        const isLastChunk = formData.get('isLastChunk') === 'true'
+        const fileName = formData.get('fileName') as string || 'upload.csv'
 
-        if (!file) {
-            return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+        let headers: string[] = []
+        let rows: string[][] = []
+
+        if (isChunked && chunkData) {
+            // Parse the pre-parsed chunk data from client
+            const parsed = JSON.parse(chunkData)
+            headers = parsed.headers
+            rows = parsed.rows
+        } else if (file) {
+            // Traditional file upload - parse CSV
+            const csvContent = await file.text()
+            const parsed = parseCSV(csvContent)
+            headers = parsed.headers
+            rows = parsed.rows
+        } else {
+            return NextResponse.json({ error: 'No file or chunk data provided' }, { status: 400 })
         }
 
-        const fileName = file.name
-        const csvContent = await file.text()
-        const { headers, rows } = parseCSV(csvContent)
-
         if (headers.length === 0 || rows.length === 0) {
-            return NextResponse.json({ error: 'Invalid CSV file - no data found' }, { status: 400 })
+            return NextResponse.json({ error: 'Invalid CSV - no data found' }, { status: 400 })
         }
 
         // Normalize headers
         const normalizedHeaders = headers.map(normalizeHeader)
-
-        // Check required columns
         const nameIndex = normalizedHeaders.indexOf('name')
         const stockIndex = normalizedHeaders.indexOf('stock')
         const priceIndex = normalizedHeaders.indexOf('price')
@@ -108,45 +112,32 @@ export async function POST(request: NextRequest) {
         const unitIndex = normalizedHeaders.indexOf('unit')
 
         if (nameIndex === -1) {
-            return NextResponse.json({
-                error: 'Missing required column: Product Name'
-            }, { status: 400 })
+            return NextResponse.json({ error: 'Missing required column: Product Name' }, { status: 400 })
         }
 
-        // OPTIMIZATION 1: Fetch all products and categories in parallel, upfront
+        // Fetch products and categories (lightweight query)
         const [allProducts, categories] = await Promise.all([
             prisma.product.findMany({
-                select: { id: true, name: true, price: true, originalPrice: true, stock: true }
+                select: { id: true, name: true }
             }),
-            prisma.category.findMany()
+            prisma.category.findMany({
+                select: { id: true, name: true, slug: true }
+            })
         ])
 
-        // Build lookup maps for O(1) access
-        const productMap = new Map<string, { id: string; price: number; originalPrice: number | null; stock: number }>(
-            allProducts.map(p => [p.name.toLowerCase(), { id: p.id, price: p.price, originalPrice: p.originalPrice, stock: p.stock }])
-        )
-        const categoryMap = new Map<string, Category>(
-            categories.map((c: Category) => [c.name.toLowerCase(), c])
-        )
+        // Build lookup maps
+        const productMap = new Map(allProducts.map(p => [p.name.toLowerCase(), p.id]))
+        const categoryMap = new Map(categories.map(c => [c.name.toLowerCase(), c]))
 
-        // OPTIMIZATION 2: Process all rows in memory first
-        const updates: Array<{ id: string; data: Record<string, number> }> = []
-        const creates: Array<{
-            name: string
-            slug: string
-            categoryId: string
-            price: number
-            originalPrice?: number
-            stock: number
-            unit: string
-            discount: number
-        }> = []
+        // Process rows
+        const updates: Array<{ id: string; stock?: number; price?: number; originalPrice?: number; discount?: number }> = []
+        const creates: Array<any> = []
         const errors: string[] = []
         const usedSlugs = new Set<string>()
 
         for (let i = 0; i < rows.length; i++) {
             const row = rows[i]
-            const rowNumber = i + 2
+            const rowNumber = i + 2 + (chunkIndex * 20) // Adjust for chunk offset
 
             try {
                 const productName = row[nameIndex]?.trim()
@@ -157,67 +148,47 @@ export async function POST(request: NextRequest) {
 
                 const stock = stockIndex !== -1 ? parseInt(row[stockIndex]) || 0 : undefined
                 const originalPrice = originalPriceIndex !== -1 ? parseFloat(row[originalPriceIndex]) || undefined : undefined
-
-                let price: number | undefined
-                if (priceIndex !== -1 && row[priceIndex]?.trim()) {
-                    price = parseFloat(row[priceIndex]) || undefined
-                }
-                if (!price && originalPrice) {
-                    price = originalPrice
-                }
+                let price = priceIndex !== -1 && row[priceIndex]?.trim() ? parseFloat(row[priceIndex]) || undefined : undefined
+                if (!price && originalPrice) price = originalPrice
 
                 const categoryName = categoryIndex !== -1 ? row[categoryIndex]?.trim() : undefined
                 const unit = unitIndex !== -1 ? row[unitIndex]?.trim() : undefined
 
-                // Check if product exists (O(1) lookup)
-                const existingProduct = productMap.get(productName.toLowerCase())
+                const existingProductId = productMap.get(productName.toLowerCase())
 
-                if (existingProduct) {
-                    // Prepare update
-                    const updateData: Record<string, number> = {}
+                if (existingProductId) {
+                    const updateData: any = {}
                     if (stock !== undefined) updateData.stock = stock
                     if (price !== undefined) updateData.price = price
                     if (originalPrice !== undefined) updateData.originalPrice = originalPrice
-
-                    if (price !== undefined && originalPrice !== undefined && originalPrice > price) {
+                    if (price && originalPrice && originalPrice > price) {
                         updateData.discount = Math.round(((originalPrice - price) / originalPrice) * 100)
                     }
-
                     if (Object.keys(updateData).length > 0) {
-                        updates.push({ id: existingProduct.id, data: updateData })
+                        updates.push({ id: existingProductId, ...updateData })
                     }
                 } else {
-                    // Prepare create
                     if (!categoryName) {
-                        errors.push(`Row ${rowNumber}: Cannot create new product "${productName}" without category`)
+                        errors.push(`Row ${rowNumber}: Cannot create "${productName}" without category`)
                         continue
                     }
 
                     let parsedCategoryName = categoryName
                     if (categoryName.includes('>')) {
-                        const parts = categoryName.split('>')
-                        parsedCategoryName = parts[parts.length - 1].trim()
+                        parsedCategoryName = categoryName.split('>').pop()?.trim() || categoryName
                     }
 
-                    let category = categoryMap.get(parsedCategoryName.toLowerCase())
-                    if (!category && parsedCategoryName !== categoryName) {
-                        category = categoryMap.get(categoryName.toLowerCase())
-                    }
-
+                    const category = categoryMap.get(parsedCategoryName.toLowerCase()) || categoryMap.get(categoryName.toLowerCase())
                     if (!category) {
                         errors.push(`Row ${rowNumber}: Category "${parsedCategoryName}" not found`)
                         continue
                     }
 
-                    // Generate unique slug
-                    const baseSlug = productName.toLowerCase()
-                        .replace(/[^a-z0-9]+/g, '-')
-                        .replace(/(^-|-$)/g, '')
-
+                    const baseSlug = productName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
                     let slug = baseSlug
-                    let slugCounter = 1
+                    let counter = 1
                     while (usedSlugs.has(slug)) {
-                        slug = `${baseSlug}-${slugCounter++}`
+                        slug = `${baseSlug}-${counter++}`
                     }
                     usedSlugs.add(slug)
 
@@ -226,123 +197,119 @@ export async function POST(request: NextRequest) {
                         slug,
                         categoryId: category.id,
                         price: price || 0,
-                        originalPrice: originalPrice,
+                        originalPrice,
                         stock: stock || 0,
                         unit: unit || '1 piece',
                         discount: originalPrice && price && originalPrice > price
-                            ? Math.round(((originalPrice - price) / originalPrice) * 100)
-                            : 0,
+                            ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0,
+                        isActive: true,
+                        images: [],
+                        tags: [],
+                        timeSlots: ['ALL_DAY'],
                     })
                 }
             } catch (err: unknown) {
-                const errorMessage = err instanceof Error ? err.message : 'Unknown error'
-                errors.push(`Row ${rowNumber}: ${errorMessage}`)
+                errors.push(`Row ${rowNumber}: ${err instanceof Error ? err.message : 'Error'}`)
             }
         }
 
-        // OPTIMIZATION 3: Execute bulk operations using transactions
+        // Execute updates in small batches
         let updated = 0
         let created = 0
 
-        // Batch updates in chunks of 50 to avoid overwhelming the database
-        const BATCH_SIZE = 50
-
         if (updates.length > 0) {
+            const BATCH_SIZE = 10
             for (let i = 0; i < updates.length; i += BATCH_SIZE) {
                 const batch = updates.slice(i, i + BATCH_SIZE)
                 await prisma.$transaction(
                     batch.map(u => prisma.product.update({
                         where: { id: u.id },
-                        data: { ...u.data, updatedAt: new Date() }
+                        data: {
+                            stock: u.stock,
+                            price: u.price,
+                            originalPrice: u.originalPrice,
+                            discount: u.discount,
+                            updatedAt: new Date()
+                        }
                     }))
                 )
             }
             updated = updates.length
         }
 
-        // Check for existing slugs before creating
+        // Execute creates in small batches
         if (creates.length > 0) {
+            // Check for existing slugs
             const existingSlugs = await prisma.product.findMany({
                 where: { slug: { in: creates.map(c => c.slug) } },
                 select: { slug: true }
             })
             const existingSlugSet = new Set(existingSlugs.map(s => s.slug))
 
-            // Fix any conflicting slugs
-            for (const createItem of creates) {
-                if (existingSlugSet.has(createItem.slug)) {
+            for (const item of creates) {
+                if (existingSlugSet.has(item.slug)) {
                     let counter = 1
-                    let newSlug = `${createItem.slug}-${counter}`
-                    while (existingSlugSet.has(newSlug) || usedSlugs.has(newSlug)) {
-                        counter++
-                        newSlug = `${createItem.slug}-${counter}`
-                    }
-                    createItem.slug = newSlug
-                    usedSlugs.add(newSlug)
+                    while (existingSlugSet.has(`${item.slug}-${counter}`)) counter++
+                    item.slug = `${item.slug}-${counter}`
                 }
             }
 
-            // Batch creates
+            const BATCH_SIZE = 10
             for (let i = 0; i < creates.length; i += BATCH_SIZE) {
                 const batch = creates.slice(i, i + BATCH_SIZE)
                 await prisma.$transaction(
-                    batch.map(c => prisma.product.create({
-                        data: {
-                            ...c,
-                            isActive: true,
-                            images: [],
-                            tags: [],
-                            timeSlots: ['ALL_DAY'],
-                        }
-                    }))
+                    batch.map(c => prisma.product.create({ data: c }))
                 )
             }
             created = creates.length
         }
 
-        // OPTIMIZATION 4: Create lightweight snapshot (only store IDs and key fields)
-        // This runs quickly since we don't fetch full product data again
-        try {
-            const snapshot = await (prisma as any).inventorySnapshot.create({
-                data: {
-                    name: `Before Upload: ${fileName} - ${new Date().toLocaleString('en-IN')}`,
-                    products: allProducts, // Use the already-fetched data
-                    productCount: allProducts.length,
-                }
-            })
+        // Only create snapshot and log on last chunk or non-chunked upload
+        if (!isChunked || isLastChunk) {
+            try {
+                // Lightweight snapshot - just save current product count
+                const productCount = await prisma.product.count()
+                const snapshot = await (prisma as any).inventorySnapshot.create({
+                    data: {
+                        name: `Upload: ${fileName} - ${new Date().toLocaleString('en-IN')}`,
+                        products: [], // Empty to save space
+                        productCount,
+                    }
+                })
 
-            // Log the upload
-            await (prisma as any).inventoryUploadLog.create({
-                data: {
-                    fileName,
-                    snapshotId: snapshot.id,
-                    productsUpdated: updated,
-                    productsCreated: created,
-                    errors: errors.length > 0 ? errors : null,
-                }
-            })
-        } catch (logError) {
-            // Don't fail the whole operation if logging fails
-            console.error('Error creating snapshot/log:', logError)
+                await (prisma as any).inventoryUploadLog.create({
+                    data: {
+                        fileName,
+                        snapshotId: snapshot.id,
+                        productsUpdated: updated,
+                        productsCreated: created,
+                        errors: errors.length > 0 ? errors : null,
+                    }
+                })
+            } catch (logError) {
+                console.error('Snapshot/log error:', logError)
+            }
+
+            // Invalidate cache only on last chunk
+            serverCache.invalidatePattern('products:')
         }
-
-        // Invalidate product cache
-        serverCache.invalidatePattern('products:')
 
         return NextResponse.json({
             success: true,
-            message: `Processed ${rows.length} rows`,
-            stats: {
-                total: rows.length,
-                updated,
-                created,
-                errors: errors.length,
-            },
-            errors: errors.length > 0 ? errors.slice(0, 10) : undefined,
+            message: isChunked
+                ? `Chunk ${chunkIndex + 1}/${totalChunks} processed`
+                : `Processed ${rows.length} rows`,
+            stats: { total: rows.length, updated, created, errors: errors.length },
+            chunkIndex,
+            isLastChunk,
+            errors: errors.length > 0 ? errors.slice(0, 5) : undefined,
         })
     } catch (error) {
         console.error('Error processing CSV:', error)
-        return NextResponse.json({ error: 'Failed to process CSV' }, { status: 500 })
+        return NextResponse.json({
+            error: 'Failed to process CSV',
+            message: error instanceof Error ? error.message : 'Unknown error'
+        }, { status: 500 })
     }
 }
 
@@ -353,7 +320,6 @@ export async function GET() {
             orderBy: { createdAt: 'desc' },
             take: 20,
         })
-
         return NextResponse.json(logs)
     } catch (error) {
         console.error('Error fetching upload history:', error)
