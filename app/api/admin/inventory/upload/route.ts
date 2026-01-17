@@ -218,7 +218,7 @@ export async function POST(request: NextRequest) {
         let created = 0
 
         if (updates.length > 0) {
-            const BATCH_SIZE = 10
+            const BATCH_SIZE = 5
             for (let i = 0; i < updates.length; i += BATCH_SIZE) {
                 const batch = updates.slice(i, i + BATCH_SIZE)
                 await prisma.$transaction(
@@ -254,7 +254,7 @@ export async function POST(request: NextRequest) {
                 }
             }
 
-            const BATCH_SIZE = 10
+            const BATCH_SIZE = 5
             for (let i = 0; i < creates.length; i += BATCH_SIZE) {
                 const batch = creates.slice(i, i + BATCH_SIZE)
                 await prisma.$transaction(

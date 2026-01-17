@@ -171,8 +171,8 @@ export default function InventoryManager() {
                 return
             }
 
-            // Split into chunks of 20 rows each
-            const CHUNK_SIZE = 20
+            // Split into chunks of 10 rows each (smaller for reliability)
+            const CHUNK_SIZE = 10
             const chunks: string[][][] = []
             for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
                 chunks.push(rows.slice(i, i + CHUNK_SIZE))
@@ -184,7 +184,7 @@ export default function InventoryManager() {
             let totalErrors = 0
             const allErrors: string[] = []
 
-            // Upload each chunk sequentially
+            // Upload each chunk sequentially with retry logic
             for (let i = 0; i < chunks.length; i++) {
                 setUploadProgress({ current: i + 1, total: totalChunks })
 
@@ -199,22 +199,40 @@ export default function InventoryManager() {
                     rows: chunks[i]
                 }))
 
-                const res = await fetch('/api/admin/inventory/upload', {
-                    method: 'POST',
-                    body: formData,
-                })
+                // Retry logic for transient failures
+                let lastError: Error | null = null
+                for (let attempt = 0; attempt < 3; attempt++) {
+                    try {
+                        const res = await fetch('/api/admin/inventory/upload', {
+                            method: 'POST',
+                            body: formData,
+                        })
 
-                const data = await res.json()
+                        const data = await res.json()
 
-                if (!res.ok) {
-                    throw new Error(data.error || `Chunk ${i + 1} failed`)
+                        if (!res.ok) {
+                            throw new Error(data.error || data.message || `Chunk ${i + 1} failed`)
+                        }
+
+                        totalUpdated += data.stats?.updated || 0
+                        totalCreated += data.stats?.created || 0
+                        totalErrors += data.stats?.errors || 0
+                        if (data.errors) {
+                            allErrors.push(...data.errors)
+                        }
+                        lastError = null
+                        break // Success, exit retry loop
+                    } catch (err) {
+                        lastError = err instanceof Error ? err : new Error('Unknown error')
+                        if (attempt < 2) {
+                            // Wait 1 second before retry
+                            await new Promise(resolve => setTimeout(resolve, 1000))
+                        }
+                    }
                 }
 
-                totalUpdated += data.stats?.updated || 0
-                totalCreated += data.stats?.created || 0
-                totalErrors += data.stats?.errors || 0
-                if (data.errors) {
-                    allErrors.push(...data.errors)
+                if (lastError) {
+                    throw lastError
                 }
             }
 

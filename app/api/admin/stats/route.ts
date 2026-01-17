@@ -158,28 +158,29 @@ export async function GET(request: NextRequest) {
             })
         ])
 
-        // Daily revenue for last 7 days (for chart)
-        const dailyRevenue = []
+        // Daily revenue for last 7 days (for chart) - OPTIMIZED: parallel queries
+        const dailyRevenuePromises = []
         for (let i = 6; i >= 0; i--) {
             const dayStart = new Date(todayStart)
             dayStart.setDate(dayStart.getDate() - i)
             const dayEnd = new Date(dayStart)
             dayEnd.setDate(dayEnd.getDate() + 1)
 
-            const dayRevenue = await prisma.order.aggregate({
-                _sum: { totalAmount: true },
-                where: {
-                    createdAt: { gte: dayStart, lt: dayEnd },
-                    status: { not: 'CANCELLED' }
-                }
-            })
-
-            dailyRevenue.push({
-                date: dayStart.toISOString().split('T')[0],
-                day: dayStart.toLocaleDateString('en-US', { weekday: 'short' }),
-                revenue: dayRevenue._sum.totalAmount || 0
-            })
+            dailyRevenuePromises.push(
+                prisma.order.aggregate({
+                    _sum: { totalAmount: true },
+                    where: {
+                        createdAt: { gte: dayStart, lt: dayEnd },
+                        status: { not: 'CANCELLED' }
+                    }
+                }).then(result => ({
+                    date: dayStart.toISOString().split('T')[0],
+                    day: dayStart.toLocaleDateString('en-US', { weekday: 'short' }),
+                    revenue: result._sum.totalAmount || 0
+                }))
+            )
         }
+        const dailyRevenue = await Promise.all(dailyRevenuePromises)
 
         return NextResponse.json({
             overview: {

@@ -8,6 +8,10 @@
       "maxDuration": 10,
       "memory": 1024
     },
+    "app/api/admin/stats/route.ts": {
+      "maxDuration": 30,
+      "memory": 1024
+    },
     "app/api/admin/inventory/upload/route.ts": {
       "maxDuration": 60,
       "memory": 1024
