@@ -256,10 +256,20 @@ export default function InventoryManager() {
             fetchUploadLogs()
 
         } catch (error) {
+            // Show partial success if some batches completed
+            const processedRows = uploadProgress ? uploadProgress.current * 10 : 0
             setUploadResult({
                 success: false,
-                message: error instanceof Error ? error.message : 'Upload failed',
-                stats: { total: 0, updated: 0, created: 0, errors: 0 },
+                message: error instanceof Error
+                    ? `${error.message}${processedRows > 0 ? ` (${processedRows} products were processed before failure)` : ''}`
+                    : 'Upload failed',
+                stats: {
+                    total: processedRows,
+                    updated: totalUpdated,
+                    created: totalCreated,
+                    errors: totalErrors
+                },
+                errors: allErrors.length > 0 ? allErrors.slice(0, 10) : undefined,
             })
         } finally {
             setIsLoading(false)

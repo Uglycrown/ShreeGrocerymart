@@ -306,8 +306,26 @@ export async function POST(request: NextRequest) {
         })
     } catch (error) {
         console.error('Error processing CSV:', error)
+
+        // Provide more detailed error info
+        let errorMessage = 'Failed to process CSV'
+        let errorDetails = ''
+
+        if (error instanceof Error) {
+            errorMessage = error.message
+            // Check for specific database errors
+            if (error.message.includes('timeout') || error.message.includes('Timeout')) {
+                errorDetails = 'Database connection timed out. Try again shortly.'
+            } else if (error.message.includes('ECONNRESET') || error.message.includes('socket')) {
+                errorDetails = 'Network connection was reset. The database may be overloaded.'
+            } else if (error.message.includes('MongoNetwork')) {
+                errorDetails = 'MongoDB network error. Check your database connection.'
+            }
+        }
+
         return NextResponse.json({
-            error: 'Failed to process CSV',
+            error: errorMessage,
+            details: errorDetails || 'An unexpected error occurred while processing the CSV.',
             message: error instanceof Error ? error.message : 'Unknown error'
         }, { status: 500 })
     }
